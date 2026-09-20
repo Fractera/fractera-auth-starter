@@ -8,6 +8,11 @@
     "desired": 24681,
     "note": "A wish, not a decision. The node assigns the actual port from the block 24680-24699 and writes it into MICROSERVICES.json. Ask the node, never remember."
   },
+  "env": {
+    "file": ".env.local",
+    "example": ".env.example",
+    "note": "Next reads .env.local by its own convention. Named here because the sibling data service reads plain .env — the installer must ask the passport instead of assuming one name for both."
+  },
   "runtime": {
     "stack": "next",
     "node": ">=20",
