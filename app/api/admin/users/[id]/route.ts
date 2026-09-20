@@ -1,0 +1,109 @@
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth/auth";
+import { getDb } from "@/lib/db/index";
+
+export const PATCH = auth(async function PATCH(req, context) {
+  const session = req.auth;
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const roles: string[] = (session.user as { roles?: string[] }).roles ?? [];
+  // 🔒 ПРАВИТЬ ЗАПИСЬ МОГУТ АДМИНИСТРАТОР И АРХИТЕКТОР (владелец 2026-08-21),
+  // но роль архитектора остаётся за архитектором — см. ниже.
+  const callerIsArchitect = roles.includes("architect");
+  if (!callerIsArchitect && !roles.includes("admin")) {
+    return NextResponse.json({ error: "Forbidden", requires: ["admin", "architect"] }, { status: 403 });
+  }
+
+  const params = await (context?.params as Promise<{ id: string }>);
+  const id = params?.id;
+  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+  // Role-protection rules (enforced here):
+  //   1. A user can NEVER remove the architect role from themselves — we block
+  //      editing your own account entirely, which covers it.
+  //   2. Only ANOTHER architect can remove architect from another architect —
+  //      the self-block below guarantees it's a different account.
+  //   3. 🔒 АДМИНИСТРАТОР НЕ ТРОГАЕТ РОЛЬ АРХИТЕКТОРА — ни выдаёт, ни снимает.
+  //      Без этого правила расширение доступа до `admin` означало бы, что
+  //      администратор выдаёт `architect` кому угодно, в том числе своему
+  //      второму аккаунту, — то есть повышает себя до полного доступа, и
+  //      разница между двумя ролями исчезает в первый же день. Проверяется
+  //      ниже, когда известны и текущие роли записи, и запрошенные.
+  const currentUserId = (session.user as { id?: string }).id;
+  if (id === currentUserId) return NextResponse.json({ error: "Cannot modify your own account" }, { status: 400 });
+
+  const body = await req.json() as {
+    nickname?: string;
+    email?: string;
+    roles?: string[];
+    is_active?: number;
+  };
+
+  const db = getDb();
+  const user = db.prepare("SELECT id, email, roles FROM users WHERE id = ?").get(id) as
+    | { id: string; email: string; roles: string }
+    | undefined;
+  if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+  // Правило 3: администратор не выдаёт и не снимает роль архитектора.
+  //
+  // Сравниваются ТЕКУЩИЕ роли записи и ЗАПРОШЕННЫЕ: запрет срабатывает лишь
+  // тогда, когда `architect` реально появляется или исчезает. Администратор,
+  // меняющий менеджера на бухгалтера у чужого архитектора, ничего не нарушает и
+  // отказа не получит — правило стережёт одну роль, а не любую правку.
+  if (!callerIsArchitect && body.roles !== undefined) {
+    let had = false;
+    try {
+      const parsed = JSON.parse(user.roles);
+      had = Array.isArray(parsed) && parsed.includes("architect");
+    } catch {
+      had = false;
+    }
+    const wants = body.roles.includes("architect");
+    if (had !== wants) {
+      return NextResponse.json(
+        { error: "Only an architect may grant or remove the architect role", requires: ["architect"] },
+        { status: 403 },
+      );
+    }
+  }
+
+  const updates: string[] = [];
+  const values: unknown[] = [];
+
+  if (body.nickname !== undefined) { updates.push("nickname = ?"); values.push(body.nickname); }
+  if (body.email !== undefined && body.email !== user.email) {
+    const existing = db.prepare("SELECT id FROM users WHERE email = ? AND id != ?").get(body.email, id);
+    if (existing) return NextResponse.json({ error: "Email already in use" }, { status: 409 });
+    updates.push("email = ?"); values.push(body.email);
+  }
+  if (body.roles !== undefined) { updates.push("roles = ?"); values.push(JSON.stringify(body.roles)); }
+  if (body.is_active !== undefined) { updates.push("is_active = ?"); values.push(body.is_active ? 1 : 0); }
+
+  if (updates.length === 0) return NextResponse.json({ ok: true });
+
+  updates.push("updated_at = datetime('now')");
+  values.push(id);
+  db.prepare(`UPDATE users SET ${updates.join(", ")} WHERE id = ?`).run(...values);
+
+  return NextResponse.json({ ok: true });
+});
+
+export const DELETE = auth(async function DELETE(req, context) {
+  const session = req.auth;
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const roles: string[] = (session.user as { roles?: string[] }).roles ?? [];
+  if (!roles.includes("architect")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const params = await (context?.params as Promise<{ id: string }>);
+  const id = params?.id;
+  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+  const currentUserId = (session.user as { id?: string }).id;
+  if (id === currentUserId) return NextResponse.json({ error: "Cannot delete your own account" }, { status: 400 });
+
+  const db = getDb();
+  const result = db.prepare("DELETE FROM users WHERE id = ?").run(id);
+  if (result.changes === 0) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+  return NextResponse.json({ ok: true });
+});

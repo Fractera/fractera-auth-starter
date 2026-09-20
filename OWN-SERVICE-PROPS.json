@@ -1,0 +1,54 @@
+{
+  "id": "auth",
+  "name": "Fractera Auth",
+  "summary": "The single service that hands out entry: sessions, roles, sign-in forms in 82 languages.",
+  "kind": "microservice",
+  "entry": "global",
+  "port": {
+    "desired": 24681,
+    "note": "A wish, not a decision. The node assigns the actual port from the block 24680-24699 and writes it into MICROSERVICES.json. Ask the node, never remember."
+  },
+  "runtime": {
+    "stack": "next",
+    "node": ">=20",
+    "build": "npm run build",
+    "start": "npm run start",
+    "nativeModules": ["better-sqlite3"]
+  },
+  "storage": {
+    "engine": "sqlite",
+    "file": "data/auth.db",
+    "schema": "executed at start, no migrations",
+    "inGit": false
+  },
+  "provides": ["session", "roles", "sign-in-ui"],
+  "doors": [
+    { "path": "/api/session", "method": "GET", "gives": "the current session, or 401" },
+    { "path": "/api/session/verify", "method": "POST", "gives": "verification of a session token for another service" },
+    { "path": "/api/auth/[...nextauth]", "method": "ANY", "gives": "the NextAuth pipeline: providers, callbacks, sign-out" },
+    { "path": "/api/auth/methods", "method": "GET", "gives": "which sign-in methods this installation actually offers" },
+    { "path": "/api/auth/guest", "method": "POST", "gives": "a guest session" },
+    { "path": "/api/auth/architect", "method": "POST", "gives": "a session for the architect layer, by ARCHITECT_TOKEN" },
+    { "path": "/api/admin/users", "method": "GET|POST", "gives": "the user list and user creation, admin only" },
+    { "path": "/api/user-count", "method": "GET", "gives": "how many accounts exist — used to decide first-run" },
+    { "path": "/login", "method": "GET", "gives": "the sign-in page" },
+    { "path": "/register", "method": "GET", "gives": "the registration page" },
+    { "path": "/logout", "method": "GET", "gives": "sign-out" }
+  ],
+  "languages": {
+    "count": 82,
+    "source": "lib/i18n/auth-strings.ts",
+    "note": "Baked into the bundle at build time; the browser language picks the entry. Reducing this set is forbidden — the owner's decision of 2026-09-20: the product is finished, it moves as it is."
+  },
+  "pages": {
+    "root": "architect-pages",
+    "items": [],
+    "note": "Empty on purpose. The architect's build pages for this service are a separate step; the folder exists so the repository is not reopened later to change its shape."
+  },
+  "license": "MIT",
+  "origin": {
+    "movedFrom": "ai-workspace/services/auth",
+    "movedAt": "2026-09-20",
+    "step": "257-1"
+  }
+}
