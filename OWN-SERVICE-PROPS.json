@@ -13,11 +13,18 @@
     "example": ".env.example",
     "note": "Next reads .env.local by its own convention. Named here because the sibling data service reads plain .env — the installer must ask the passport instead of assuming one name for both."
   },
+  "health": {
+    "path": "/api/auth/methods",
+    "expect": 200,
+    "note": "MEASURED on the built service, not chosen by the look of the name: /login and /register answer 200 too, but this door runs the service's own logic and needs neither a session nor a key. /api/session answers 401 without a session and is therefore useless to a watchdog. A watchdog must ask the CAPABILITY, not the process: a Next server stays alive while every page returns 500."
+  },
   "runtime": {
     "stack": "next",
     "node": ">=20",
     "build": "npm run build",
-    "start": "npm run start",
+    "start": "node .next/standalone/<traced path>/server.js",
+    "startNote": "NOT `npm run start`. Two measured reasons. (1) package.json pins `next start -p 3001` — the port of the server line; the node assigns its own port and the service would ignore it silently. (2) next.config.ts sets output: standalone when BASE_PATH is unset, and Next refuses: '`next start` does not work with `output: standalone`'. The standalone server reads PORT and HOSTNAME from the environment, which is exactly what the node needs. Its exact path depends on the traced root of the machine it was built on, so the installer FINDS server.js under .next/standalone and records the path it found — a machine fact belongs to the machine, not to this passport.",
+    "standaloneStatic": "Next does not copy .next/static into the standalone tree; the installer does it. Without it the pages render and every style and script answers 404 — the failure looks like broken CSS, not like a missing packaging step.",
     "nativeModules": ["better-sqlite3"]
   },
   "storage": {
