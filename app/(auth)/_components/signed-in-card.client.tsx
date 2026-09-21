@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAuthStrings, detectBrowserLang, fill, DEFAULT_AUTH_LANG } from "@/lib/i18n/auth-strings";
 import { pickRoleLabel } from "@/lib/auth/role-label";
+import { rememberSignedInHere } from "@/lib/auth/device-memory";
 
 // КАРТОЧКА ВОШЕДШЕГО ВМЕСТО ГОЛОЙ ФОРМЫ (шаг 260-2 узла AGI).
 //
@@ -53,6 +54,7 @@ export function SignedInGate({ children }: { children: ReactNode }) {
     getSession()
       .then((sess) => {
         if (!sess?.user) { setState("anonymous"); return; }
+        rememberSignedInHere();
         setState({
           who: sess.user.name || sess.user.email || "",
           roles: (sess.user as { roles?: string[] }).roles ?? [],

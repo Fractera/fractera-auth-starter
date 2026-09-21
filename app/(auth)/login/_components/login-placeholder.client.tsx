@@ -8,6 +8,16 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { getAuthStrings, detectBrowserLang, fill, DEFAULT_AUTH_LANG, type AuthStrings } from "@/lib/i18n/auth-strings";
 import { SignedInGate } from "../../_components/signed-in-card.client";
+import { STRINGS } from "@/lib/i18n/auth-strings";
+import { rememberSignedInHere, signedInHereBefore } from "@/lib/auth/device-memory";
+
+// Адрес регистрации с сохранённым адресом возврата — один на кнопку, подсказку и
+// переход при пустой базе.
+function registerHrefFor(callbackUrl: string, requireRole: string): string {
+  return callbackUrl !== "/"
+    ? `/register?callbackUrl=${encodeURIComponent(callbackUrl)}${requireRole !== "architect" ? `&requireRole=${requireRole}` : ""}`
+    : "/register";
+}
 
 function AccessDeniedModal({ onClose, s }: { onClose: () => void; s: AuthStrings }) {
   return (
@@ -68,6 +78,20 @@ function LoginForm() {
       .catch(() => {});
   }, []);
 
+  // 🔒 ВХОД ПО УМОЛЧАНИЮ, РЕГИСТРАЦИЯ ТАМ, ГДЕ ОНА ЕДИНСТВЕННО ВЕРНА (260-4).
+  // Пользователей нет — входить некому: ведём на регистрацию сразу, и первый
+  // зарегистрированный станет архитектором (его окно предупреждения живёт там).
+  // Иначе — форма входа, а устройству, с которого ещё не входили, подсказка
+  // «впервые здесь?» над ней. `null` — ещё не знаем, подсказку не мигаем.
+  const [firstTimeHint, setFirstTimeHint] = useState<boolean | null>(null);
+  useEffect(() => {
+    setFirstTimeHint(!signedInHereBefore());
+    fetch("/api/user-count", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d: { count?: number }) => { if (d?.count === 0) window.location.replace(registerHrefFor(callbackUrl, requireRole)); })
+      .catch(() => {});
+  }, [callbackUrl, requireRole]);
+
   // 🪦 ПРИВЕТСТВЕННЫЙ ТОСТ ЗДЕСЬ СНЯТ 2026-09-21 (260-2): вошедший на эту форму
   // больше не попадает — вместо неё `SignedInGate` показывает карточку с той же
   // строкой приветствия и кнопкой возврата на сайт. Остался только совет о
@@ -106,6 +130,8 @@ function LoginForm() {
       return;
     }
 
+    rememberSignedInHere();
+
     if (typeof window !== "undefined" && window.parent !== window) {
       window.parent.postMessage({ type: "AUTH_SUCCESS" }, "*");
     }
@@ -131,9 +157,7 @@ function LoginForm() {
   };
 
   // Preserve the return target when switching to the register form.
-  const registerHref = callbackUrl !== "/"
-    ? `/register?callbackUrl=${encodeURIComponent(callbackUrl)}${requireRole !== "architect" ? `&requireRole=${requireRole}` : ""}`
-    : "/register";
+  const registerHref = registerHrefFor(callbackUrl, requireRole);
 
   // When at least one provider (Google / magic-link) is configured, signing in
   // with it also REGISTERS the user on first use — so the separate Register step
@@ -221,6 +245,18 @@ function LoginForm() {
           )}
           {orDivider}
         </>
+      )}
+
+      {/* 260-4: устройство, с которого ещё не входили, видит путь к регистрации
+          ДО формы — иначе новичок заполняет вход и получает «неверные данные». */}
+      {firstTimeHint && !hasProvider && (
+        <button
+          type="button"
+          onClick={() => { window.location.href = registerHref }}
+          className="text-sm text-left text-primary underline underline-offset-4"
+        >
+          {s.firstTimeHere ?? STRINGS.en.firstTimeHere}
+        </button>
       )}
 
       {/* Email + password — existing accounts sign in here (always available,

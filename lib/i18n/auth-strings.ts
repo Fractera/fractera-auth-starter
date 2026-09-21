@@ -80,6 +80,11 @@ export type AuthStrings = {
    * сломала бы вход целиком.
    */
   goToMemory?: string;
+  /**
+   * Подсказка над формой входа устройству, с которого ещё не входили (260-4 узла AGI).
+   * Необязательный по той же причине, что `goToChat`: 82 языка, агент пишет en и ru.
+   */
+  firstTimeHere?: string;
 };
 
 export const DEFAULT_AUTH_LANG = "en";
@@ -130,6 +135,7 @@ export const STRINGS: Record<string, AuthStrings> = {
     goToAdmin: "Go to Admin Panel",
     goToChat: "Go to AI agent chat",
     goToMemory: "Go to Memory",
+    firstTimeHere: "First time here? Create an account",
     signOutQuestion: "Are you sure you want to sign out?",
     signingOut: "Signing out…",
   },
@@ -1466,6 +1472,7 @@ export const STRINGS: Record<string, AuthStrings> = {
     goToAdmin: "Перейти в панель управления",
     goToChat: "Перейти в чат с ИИ-агентом",
     goToMemory: "Открыть память",
+    firstTimeHere: "Впервые здесь? Создайте аккаунт",
     signOutQuestion: "Вы действительно хотите выйти?",
     signingOut: "Выходим…",
   },

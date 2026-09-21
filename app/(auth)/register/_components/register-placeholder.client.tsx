@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { register } from "@/lib/auth/register";
 import { getAuthStrings, detectBrowserLang, DEFAULT_AUTH_LANG, type AuthStrings } from "@/lib/i18n/auth-strings";
 import { SignedInGate } from "../../_components/signed-in-card.client";
+import { rememberSignedInHere } from "@/lib/auth/device-memory";
 
 export function AccessDeniedModal({ onClose, s }: { onClose: () => void; s: AuthStrings }) {
   return (
@@ -130,6 +131,7 @@ function RegisterForm() {
 
       const res = await signIn("credentials", { email, password, redirect: false });
       if (res?.error) { setError(s.signInFailedAfterReg); return; }
+      rememberSignedInHere(); // 260-4: с этого устройства уже входили
 
       if (typeof window !== "undefined" && window.parent !== window) {
         window.parent.postMessage({ type: "AUTH_SUCCESS" }, "*");
