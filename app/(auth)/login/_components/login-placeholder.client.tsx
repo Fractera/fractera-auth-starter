@@ -7,6 +7,7 @@ import { Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { getAuthStrings, detectBrowserLang, fill, DEFAULT_AUTH_LANG, type AuthStrings } from "@/lib/i18n/auth-strings";
+import { SignedInGate } from "../../_components/signed-in-card.client";
 
 function AccessDeniedModal({ onClose, s }: { onClose: () => void; s: AuthStrings }) {
   return (
@@ -67,35 +68,17 @@ function LoginForm() {
       .catch(() => {});
   }, []);
 
-  // Welcome toast. If the visitor is ALREADY signed in when they land on /login
-  // — which is exactly what happens when their role was too low for the target
-  // (e.g. a `user` bounced from the Admin Panel) — the bare form looks like a
-  // failed login. Confirm the sign-in and show their role so it's clear auth
-  // worked; if a higher role is required for this destination, say which.
+  // 🪦 ПРИВЕТСТВЕННЫЙ ТОСТ ЗДЕСЬ СНЯТ 2026-09-21 (260-2): вошедший на эту форму
+  // больше не попадает — вместо неё `SignedInGate` показывает карточку с той же
+  // строкой приветствия и кнопкой возврата на сайт. Остался только совет о
+  // недостающей роли: карточка его не говорит, а человеку он нужен.
   useEffect(() => {
+    if (!requireRole) return;
     const t = getAuthStrings(detectBrowserLang());
     getSession()
       .then((sess) => {
-        if (!sess?.user) return;
-        const who = sess.user.name || sess.user.email || "there";
-        const roles = (sess.user as { roles?: string[] }).roles ?? [];
-        // 🔒 ПОКАЗЫВАЕМ РОЛЬ, КОТОРАЯ ОТВЕЧАЕТ НА ВОПРОС ЧЕЛОВЕКА, А НЕ ПЕРВУЮ
-        // ПОПАВШУЮСЯ. ✗ оплачено 2026-09-01: стояло `roles[0]`, у владельца 14
-        // ролей, `user` среди них ПЕРВАЯ по порядку выдачи — и экран писал «ваша
-        // роль: user» человеку с ролью архитектора. Сессия при этом была полной:
-        // врала надпись, и выглядело это как отказ в правах.
-        //
-        // Порядок предпочтения: та роль, ради которой сюда пришли (если она
-        // есть) → сильнейший тир платформы → хоть что-нибудь. Список ролей
-        // (`ALL_ROLES`) сгруппирован по смыслу, а не по силе, и брать «первую из
-        // него» было бы той же ошибкой с другого конца.
-        const roleLabel =
-          (requireRole && roles.includes(requireRole) ? requireRole : undefined) ??
-          ["architect", "admin"].find((r) => roles.includes(r)) ??
-          roles[0] ??
-          "user";
-        toast.success(fill(t.welcomeToast, { who, role: roleLabel }));
-        if (requireRole && !roles.includes(requireRole)) {
+        const roles = (sess?.user as { roles?: string[] } | undefined)?.roles ?? [];
+        if (sess?.user && !roles.includes(requireRole)) {
           toast.info(fill(t.roleNeededToast, { role: requireRole }));
         }
       })
@@ -280,7 +263,9 @@ export function LoginPlaceholder() {
   return (
     <div className="min-h-screen flex items-center justify-center p-8">
       <Suspense fallback={<div className="w-full max-w-sm p-8 rounded-xl border bg-background shadow-sm flex flex-col gap-4"><div className="h-5 w-1/3 rounded bg-muted animate-pulse" /><div className="h-10 rounded bg-muted animate-pulse" /></div>}>
-        <LoginForm />
+        <SignedInGate>
+          <LoginForm />
+        </SignedInGate>
       </Suspense>
     </div>
   );

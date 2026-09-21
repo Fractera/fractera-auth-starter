@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { register } from "@/lib/auth/register";
 import { getAuthStrings, detectBrowserLang, DEFAULT_AUTH_LANG, type AuthStrings } from "@/lib/i18n/auth-strings";
+import { SignedInGate } from "../../_components/signed-in-card.client";
 
 export function AccessDeniedModal({ onClose, s }: { onClose: () => void; s: AuthStrings }) {
   return (
@@ -221,7 +222,9 @@ export function RegisterPlaceholder() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8">
       <Suspense fallback={null}>
-        <RegisterForm />
+        <SignedInGate>
+          <RegisterForm />
+        </SignedInGate>
       </Suspense>
     </div>
   );
