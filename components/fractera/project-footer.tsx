@@ -54,7 +54,17 @@ export async function ProjectFooter({ lang, brand: fallback = "" }: { lang: stri
           </div>
         )}
         <p className="truncate text-sm">
-          © {new Date().getFullYear()}{brand ? ` ${brand}` : ""}. {w.rights}
+          {/* Имя ведёт в корень проекта (сайт) — слово владельца 2026-09-24, как и имя в хедере. */}
+          © {new Date().getFullYear()}
+          {brand && (
+            <>
+              {" "}
+              <a href={site ? `${site}/${lang}` : "/"} className="hover:text-primary">
+                {brand}
+              </a>
+            </>
+          )}
+          . {w.rights}
         </p>
       </div>
     </footer>
