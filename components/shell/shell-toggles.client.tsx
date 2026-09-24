@@ -26,9 +26,16 @@ const WIDTH_KEY = "fractera-app-width"
 export function AppWidthToggle({ labels }: { labels: { wide: string; normal: string } }) {
   const [narrow, setNarrow] = useState(false)
 
+  // 🔒 ВЫБОР ПРИМЕНЯЕТСЯ ЗАНОВО ПРИ МОНТИРОВАНИИ, А НЕ ТОЛЬКО СКРИПТОМ ДО ОТРИСОВКИ (285-7, измерено в браузере
+  // владельца): на сайте атрибут, поставленный скриптом, пропадал — корень страницы перерисовывался, и ширина
+  // возвращалась к обычной при cookie `narrow`. Тема это переживала, потому что провайдер темы применяет её при
+  // монтировании; ширина теперь делает то же.
   useEffect(() => {
-    readPref(WIDTH_KEY) // поднимает прежний выбор этого адреса в cookie проекта
-    setNarrow(document.documentElement.getAttribute("data-app-width") === "narrow")
+    const isNarrow = readPref(WIDTH_KEY) === "narrow" // заодно поднимает прежний выбор адреса в cookie проекта
+    const el = document.documentElement
+    if (isNarrow) el.setAttribute("data-app-width", "narrow")
+    else el.removeAttribute("data-app-width")
+    setNarrow(isNarrow)
   }, [])
 
   function toggle() {
