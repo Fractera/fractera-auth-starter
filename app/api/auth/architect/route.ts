@@ -1,7 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse, connection } from "next/server";
 import { signIn } from "@/lib/auth/auth";
 
 export async function GET(request: Request) {
+  // 295: ответ зависит от окружения и запроса — только на каждый запрос. Без этой строки сборка без ARCHITECT_TOKEN
+  // предрендерила отказ, и он отвечал бы вечно.
+  await connection();
   if (!process.env.ARCHITECT_TOKEN) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

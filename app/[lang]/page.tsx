@@ -35,8 +35,6 @@ const WORDS = {
 
 type Lang = keyof typeof WORDS
 
-export const dynamicParams = false
-
 export function generateStaticParams() {
   return Object.keys(WORDS).map((lang) => ({ lang }))
 }

@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+// 295: корень `/` с Cache Components читает сессию внутри <Suspense>, и его собственное перенаправление приходит уже
+// потоком (200 + meta refresh). Чтобы не вошедший получал прежний настоящий 307 на /login, наличие куки сессии
+// проверяется здесь. Имена куки — те же, что в lib/auth/auth.config.ts; просроченную куку ловит сама страница.
+const SESSION_COOKIES = ["__Secure-authjs.session-token", "authjs.session-token"];
+
 export function proxy(req: NextRequest) {
+  if (req.nextUrl.pathname === "/" && !SESSION_COOKIES.some((n) => req.cookies.has(n))) {
+    return NextResponse.redirect(new URL("/login", req.url), 307);
+  }
   const res = NextResponse.next();
   // Allow this auth page to be embedded as an iframe by:
   //  - same origin (self)

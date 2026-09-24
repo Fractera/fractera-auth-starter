@@ -7,7 +7,6 @@ import { readRawDesign, writeDesignPatch } from "@/lib/settings/design-store"
 // Тот же договор, что у сайта-стартера: ядро узла приходит без сессии, с ключом `SETTINGS_SECRET`
 // (установщик генерирует его один раз и кладёт в оба конца). Ключа в окружении нет — дверь закрыта для
 // всех. Запись не меняет страницы сама: их применяет развёртывание.
-export const dynamic = "force-dynamic"
 
 function keyOk(req: NextRequest): boolean {
   const expected = process.env.SETTINGS_SECRET ?? ""

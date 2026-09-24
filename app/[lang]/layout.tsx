@@ -3,6 +3,7 @@ import { ProjectHeader } from "@/components/shell/project-header"
 import { ProjectFooter } from "@/components/shell/project-footer"
 import { loadProjectShell } from "@/components/shell/remote-shell"
 import type { ShellSurface } from "@/components/shell/shell-types"
+import { cacheLife } from "next/cache"
 
 // ОБОЛОЧКА ПРОЕКТА НА СТРАНИЦАХ С ЯЗЫКОМ В АДРЕСЕ (узел Fractera, шаг 285-3).
 //
@@ -21,15 +22,33 @@ const SURFACE: ShellSurface = {
   languages: ["en", "ru"],
 }
 
+// 295: ОБОЛОЧКА РИСУЕТСЯ ВНУТРИ КЭША (Cache Components) и держится минуты: правка меню на сайте доходит сюда без
+// пересборки этой службы. Рисуется, а не только читается, в кэше намеренно: подвал печатает год (`new Date()`), а
+// текущее время вне кэша Next 16 запрещает на статической странице — копию оболочки (`shell-kit`) не трогаем.
+async function ShellHeader({ lang }: { lang: string }) {
+  "use cache"
+  cacheLife("minutes")
+  const shell = await loadProjectShell(lang)
+  return shell ? <ProjectHeader data={shell} surface={SURFACE} /> : null
+}
+
+async function ShellFooter({ lang }: { lang: string }) {
+  "use cache"
+  cacheLife("minutes")
+  const shell = await loadProjectShell(lang)
+  return shell ? <ProjectFooter data={shell} surface={SURFACE} /> : null
+}
+
 export default async function LangLayout({ children, params }: { children: React.ReactNode; params: Promise<{ lang: string }> }) {
   const { lang } = await params
-  const shell = await loadProjectShell(lang)
+  // Незнакомый язык — страница ответит 404; оболочку у сайта за ним не спрашиваем.
+  const known = SURFACE.languages?.includes(lang) ?? true
   return (
     <ThemeProvider>
       <div className="flex min-h-screen flex-col bg-background text-foreground">
-        {shell && <ProjectHeader data={shell} surface={SURFACE} />}
+        {known && <ShellHeader lang={lang} />}
         {children}
-        {shell && <ProjectFooter data={shell} surface={SURFACE} />}
+        {known && <ShellFooter lang={lang} />}
       </div>
     </ThemeProvider>
   )

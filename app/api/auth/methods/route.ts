@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, connection } from "next/server";
 
 // Public flag endpoint — tells the login page which extra sign-in methods are
 // active. A method is "on" only when its credentials are non-empty (bootstrap
@@ -8,7 +8,9 @@ import { NextResponse } from "next/server";
 //
 // A static segment (app/api/auth/methods) takes precedence over the NextAuth
 // catch-all (app/api/auth/[...nextauth]), so this is never swallowed by it.
-export function GET() {
+// 295: ключи читаются на каждый запрос — предрендер со сборки запомнил бы «ключей нет» до следующей сборки.
+export async function GET() {
+  await connection();
   return NextResponse.json({
     google: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
     magicLink: !!process.env.RESEND_API_KEY,

@@ -1,8 +1,19 @@
 import { auth } from "@/lib/auth/auth";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { LoggedInView } from "./_components/logged-in-view.client";
 
-export default async function AuthRoot() {
+// 295: Cache Components — сессия читается из запроса, поэтому эта часть страницы живёт в <Suspense> и приходит потоком;
+// всё вокруг предрендерено. Страница и раньше была единственной динамической у входа (снимок ДО).
+export default function AuthRoot() {
+  return (
+    <Suspense fallback={null}>
+      <AuthRootForRequest />
+    </Suspense>
+  );
+}
+
+async function AuthRootForRequest() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 

@@ -8,7 +8,9 @@ import type { NextConfig } from "next";
 //   nginx can route to the auth service exclusively.
 // - Nginx config: location /_auth_next/ → 3001, location /api/auth/ → 3001,
 //   location /auth/ → 3001 with rewrite ^/auth/(.*) /$1 break.
+// 295: Next 16 Cache Components — кэш только через 'use cache' + cacheLife; старые настройки маршрута запрещены.
 const nextConfig: NextConfig = {
+  cacheComponents: true,
   serverExternalPackages: ["better-sqlite3"],
   ...(process.env.BASE_PATH
     ? { assetPrefix: "/_auth_next" }
