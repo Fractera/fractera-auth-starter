@@ -12,7 +12,11 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["better-sqlite3"],
   ...(process.env.BASE_PATH
     ? { assetPrefix: "/_auth_next" }
-    : { output: "standalone" }),
+    : {
+        output: "standalone",
+        // Узел Fractera (280-9/280-10): сборка в соседнюю папку, пока прежняя работает.
+        distDir: process.env.NEXT_DIST_DIR || ".next",
+      }),
   allowedDevOrigins: ["auth.partner.fractera.local"],
 };
 

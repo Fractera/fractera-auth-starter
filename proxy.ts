@@ -14,12 +14,17 @@ export function proxy(req: NextRequest) {
   const hostname = host.split(":")[0];
   const sameHostHttp  = hostname ? `http://${hostname}:* http://${hostname}` : "";
   const sameHostHttps = hostname ? `https://${hostname}:* https://${hostname}` : "";
+  // Узел Fractera (280-10): ядро показывает страницы входа во фрейме своей страницы Preview — на
+  // `architect.<зона>` или на петле машины. Вход живёт на `auth.<зона>`, значит зона — хвост имени.
+  const zone = hostname.startsWith("auth.") ? hostname.slice(5) : "";
+  const nodeAncestors = [zone ? `https://${zone} https://*.${zone}` : "", "http://localhost:* http://127.0.0.1:*"];
   res.headers.set(
     "Content-Security-Policy",
     [
       "frame-ancestors 'self'",
       sameHostHttp,
       sameHostHttps,
+      ...nodeAncestors,
       "https://*.fractera.ai",
       "http://*.fractera.local:3000",
       "http://*.fractera.local:3002",

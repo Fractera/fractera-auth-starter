@@ -25,7 +25,10 @@
     "start": "node .next/standalone/<traced path>/server.js",
     "startNote": "NOT `npm run start`. Two measured reasons. (1) package.json pins `next start -p 3001` — the port of the server line; the node assigns its own port and the service would ignore it silently. (2) next.config.ts sets output: standalone when BASE_PATH is unset, and Next refuses: '`next start` does not work with `output: standalone`'. The standalone server reads PORT and HOSTNAME from the environment, which is exactly what the node needs. Its exact path depends on the traced root of the machine it was built on, so the installer FINDS server.js under .next/standalone and records the path it found — a machine fact belongs to the machine, not to this passport.",
     "standaloneStatic": "Next does not copy .next/static into the standalone tree; the installer does it. Without it the pages render and every style and script answers 404 — the failure looks like broken CSS, not like a missing packaging step.",
-    "nativeModules": ["better-sqlite3"]
+    "nativeModules": [
+      "better-sqlite3"
+    ],
+    "distDirEnv": "NEXT_DIST_DIR"
   },
   "storage": {
     "engine": "sqlite",
@@ -33,19 +36,67 @@
     "schema": "executed at start, no migrations",
     "inGit": false
   },
-  "provides": ["session", "roles", "sign-in-ui"],
+  "provides": [
+    "session",
+    "roles",
+    "sign-in-ui"
+  ],
   "doors": [
-    { "path": "/api/session", "method": "GET", "gives": "the current session, or 401" },
-    { "path": "/api/session/verify", "method": "POST", "gives": "verification of a session token for another service" },
-    { "path": "/api/auth/[...nextauth]", "method": "ANY", "gives": "the NextAuth pipeline: providers, callbacks, sign-out" },
-    { "path": "/api/auth/methods", "method": "GET", "gives": "which sign-in methods this installation actually offers" },
-    { "path": "/api/auth/guest", "method": "POST", "gives": "a guest session" },
-    { "path": "/api/auth/architect", "method": "POST", "gives": "a session for the architect layer, by ARCHITECT_TOKEN" },
-    { "path": "/api/admin/users", "method": "GET|POST", "gives": "the user list and user creation, admin only" },
-    { "path": "/api/user-count", "method": "GET", "gives": "how many accounts exist — used to decide first-run" },
-    { "path": "/login", "method": "GET", "gives": "the sign-in page" },
-    { "path": "/register", "method": "GET", "gives": "the registration page" },
-    { "path": "/logout", "method": "GET", "gives": "sign-out" }
+    {
+      "path": "/api/session",
+      "method": "GET",
+      "gives": "the current session, or 401"
+    },
+    {
+      "path": "/api/session/verify",
+      "method": "POST",
+      "gives": "verification of a session token for another service"
+    },
+    {
+      "path": "/api/auth/[...nextauth]",
+      "method": "ANY",
+      "gives": "the NextAuth pipeline: providers, callbacks, sign-out"
+    },
+    {
+      "path": "/api/auth/methods",
+      "method": "GET",
+      "gives": "which sign-in methods this installation actually offers"
+    },
+    {
+      "path": "/api/auth/guest",
+      "method": "POST",
+      "gives": "a guest session"
+    },
+    {
+      "path": "/api/auth/architect",
+      "method": "POST",
+      "gives": "a session for the architect layer, by ARCHITECT_TOKEN"
+    },
+    {
+      "path": "/api/admin/users",
+      "method": "GET|POST",
+      "gives": "the user list and user creation, admin only"
+    },
+    {
+      "path": "/api/user-count",
+      "method": "GET",
+      "gives": "how many accounts exist — used to decide first-run"
+    },
+    {
+      "path": "/login",
+      "method": "GET",
+      "gives": "the sign-in page"
+    },
+    {
+      "path": "/register",
+      "method": "GET",
+      "gives": "the registration page"
+    },
+    {
+      "path": "/logout",
+      "method": "GET",
+      "gives": "sign-out"
+    }
   ],
   "languages": {
     "count": 82,
@@ -62,5 +113,16 @@
     "movedFrom": "ai-workspace/services/auth",
     "movedAt": "2026-09-20",
     "step": "257-1"
+  },
+  "settings": {
+    "door": "/api/settings/design",
+    "key": {
+      "header": "X-Settings-Key",
+      "env": "SETTINGS_SECRET"
+    },
+    "owns": [
+      "DESIGN-CONFIG"
+    ],
+    "note": "The sign-in pages take the node design: the core patches DESIGN-CONFIG through this door, a deployment applies it. Without a file the service keeps its own theme."
   }
 }
