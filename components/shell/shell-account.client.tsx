@@ -106,8 +106,10 @@ export function AccountButton({ side, labels, links, meUrl, loginHref, logoutHre
     return <AccountDrawer side={side} labels={labels} email={me.email} roles={me.roles} links={links} logoutHref={logoutHref} />
   }
   return (
-    <Link href={loginHref} prefetch={false} className={buttonVariants({ variant: "ghost", size: "sm" })}>
-      <LogIn />{labels.signIn}
+    // 293: как у «Личного кабинета» (278) — на md и уже только значок, подпись с lg; остаётся доступным именем.
+    // Слово владельца 2026-09-24: «ты кнопку мой аккаунт сделал для этой логики а кнопку войти не сделал».
+    <Link href={loginHref} prefetch={false} aria-label={labels.signIn} title={labels.signIn} className={buttonVariants({ variant: "ghost", size: "sm" })}>
+      <LogIn /><span className="hidden lg:inline">{labels.signIn}</span>
     </Link>
   )
 }
