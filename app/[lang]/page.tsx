@@ -42,7 +42,7 @@ export default async function AuthPresentation({ params }: { params: Promise<{ l
   if (!(lang in WORDS)) notFound()
   const w = WORDS[lang as Lang]
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background p-6 text-foreground">
+    <main className="flex flex-1 items-center justify-center bg-background p-6 text-foreground">
       <div className="flex w-full max-w-md flex-col gap-6 rounded-[var(--radius)] border border-border bg-card p-8 text-card-foreground">
         <h1 className="text-2xl font-semibold">{w.title}</h1>
         <p className="text-muted-foreground">{w.lead}</p>
