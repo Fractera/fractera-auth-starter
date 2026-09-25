@@ -7,10 +7,13 @@ import type { ShellData, ShellGroup } from "./shell-types"
 // абсолютными на тот адрес, до которого дотянется браузер человека (`PROJECT_SITE_URL`): на своём домене —
 // корень зоны, иначе петля с портом сайта. Читается на СБОРКЕ страницы — страницы остаются статическими.
 //
-// 🔒 ОДИН ЗАПРОС НА ЯЗЫК ЗА ПРОЦЕСС, ПОВТОР И ГРОМКИЙ ОТКАЗ. ✗ оплачено 283-3/283-4: ядро под нагрузкой сборки
+// 🔒 ОДИН ЗАПРОС НА ЯЗЫК ЗА КОРОТКОЕ ОКНО, ПОВТОР И ГРОМКИЙ ОТКАЗ. ✗ оплачено 283-3/283-4: ядро под нагрузкой сборки
 // молча откатилось на своё меню (4 кнопки из 9). Сайт не ответил — `null` и строка в журнале сборки.
-
-const memo = new Map<string, Promise<ShellData | null>>()
+// 🛑 ОКНО — СЕКУНДЫ, А НЕ ЖИЗНЬ ПРОЦЕССА (299-6). ✗ Оплачено 2026-09-25: запоминание «за процесс» держало первый ответ
+// сайта вечно — кэш Next истекал через минуты, повторный рендер получал тот же старый ответ, и шапка «Блоков» менялась
+// только перезапуском. Окно гасит лишь всплеск запросов одной сборки; правка меню доходит со следующим рендером.
+const MEMO_MS = 30_000
+const memo = new Map<string, { at: number; job: Promise<ShellData | null> }>()
 
 const trim = (s: string) => s.replace(/\/+$/, "")
 
@@ -55,7 +58,7 @@ async function ask(url: string): Promise<ShellData> {
  */
 export function loadProjectShell(lang: string, where?: { shellUrl?: string | null; siteUrl?: string | null }): Promise<ShellData | null> {
   const hit = memo.get(lang)
-  if (hit) return hit
+  if (hit && Date.now() - hit.at < MEMO_MS) return hit.job
   const shellUrl = (where?.shellUrl ?? process.env.PROJECT_SHELL_URL)?.trim()
   const base = trim((where?.siteUrl ?? process.env.PROJECT_SITE_URL)?.trim() ?? "")
   const job = (async () => {
@@ -78,6 +81,6 @@ export function loadProjectShell(lang: string, where?: { shellUrl?: string | nul
       return null
     }
   })()
-  memo.set(lang, job)
+  memo.set(lang, { at: Date.now(), job })
   return job
 }
