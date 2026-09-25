@@ -1,14 +1,39 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { PRESENTATION_LANGS, DEFAULT_PRESENTATION_LANG } from "@/lib/presentation-langs";
 
 // 295: корень `/` с Cache Components читает сессию внутри <Suspense>, и его собственное перенаправление приходит уже
 // потоком (200 + meta refresh). Чтобы не вошедший получал прежний настоящий 307 на /login, наличие куки сессии
 // проверяется здесь. Имена куки — те же, что в lib/auth/auth.config.ts; просроченную куку ловит сама страница.
 const SESSION_COOKIES = ["__Secure-authjs.session-token", "authjs.session-token"];
 
+// 🔒 300 (слово владельца 2026-09-25): КОРЕНЬ ВХОДА — ЕГО ГЛАВНАЯ, А НЕ ФОРМА. Ссылки на элементы строятся как
+// `https://<элемент>.<зона>/<язык>`; при одном языке без префикса ссылка стала бы `auth.<зона>/` и приводила бы в форму
+// входа вместо страницы службы. Форма живёт на `/login` — туда и так ведут все кнопки «Войти» узла (проверено поиском).
+// Вошедший на `/` по-прежнему видит свою страницу (`app/page.tsx`).
+//
+// 🔒 НЕЗНАКОМЫЙ ЯЗЫК — НА ЯЗЫК ПО УМОЛЧАНИЮ, НО ТОЛЬКО ДВУХБУКВЕННЫЙ СЕГМЕНТ. `app/[lang]` — ЖАДНЫЙ сегмент: он ловит любой
+// однословный адрес, не занятый статическим. Сайт может говорить на языке, которого у входа нет (`/de` давал 404).
+// Переадресуется лишь то, что похоже на код языка (`^[a-z]{2}import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+// 295: корень `/` с Cache Components читает сессию внутри <Suspense>, и его собственное перенаправление приходит уже
+// потоком (200 + meta refresh). Чтобы не вошедший получал прежний настоящий 307 на /login, наличие куки сессии
+// проверяется здесь. Имена куки — те же, что в lib/auth/auth.config.ts; просроченную куку ловит сама страница.
+const SESSION_COOKIES = ["__Secure-authjs.session-token", "authjs.session-token"];
+
+): `/nope` остаётся честным 404, а статические
+// `/login`, `/register`, `/logout`, `/signout`, `/guest-login` длиннее двух букв, `/api/*` исключён сопоставителем.
+const LANG_SEGMENT = /^\/([a-z]{2})(\/.*)?$/
+
 export function proxy(req: NextRequest) {
-  if (req.nextUrl.pathname === "/" && !SESSION_COOKIES.some((n) => req.cookies.has(n))) {
-    return NextResponse.redirect(new URL("/login", req.url), 307);
+  const path = req.nextUrl.pathname
+  if (path === "/" && !SESSION_COOKIES.some((n) => req.cookies.has(n))) {
+    return NextResponse.redirect(new URL(`/${DEFAULT_PRESENTATION_LANG}`, req.url), 307);
+  }
+  const lang = LANG_SEGMENT.exec(path)
+  if (lang && !(PRESENTATION_LANGS as readonly string[]).includes(lang[1])) {
+    return NextResponse.redirect(new URL(`/${DEFAULT_PRESENTATION_LANG}${lang[2] ?? ""}`, req.url), 307);
   }
   const res = NextResponse.next();
   // Allow this auth page to be embedded as an iframe by:

@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { PRESENTATION_LANGS } from "@/lib/presentation-langs"
 import { TriangleAlert } from "lucide-react"
 
 // СТРАНИЦА-ПРЕЗЕНТАЦИЯ СЛУЖБЫ ВХОДА (узел Fractera; 280-10, оформление главной сайта — шаг 286).
@@ -36,7 +37,7 @@ const WORDS = {
 type Lang = keyof typeof WORDS
 
 export function generateStaticParams() {
-  return Object.keys(WORDS).map((lang) => ({ lang }))
+  return PRESENTATION_LANGS.map((lang) => ({ lang }))
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
