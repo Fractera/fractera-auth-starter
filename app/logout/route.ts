@@ -14,13 +14,36 @@ import { signOut } from "@/lib/auth/auth";
 //
 // Plain GET navigation (no JS required — the drawer link works with JavaScript off), same
 // pattern as the sibling /api/auth/guest route (signIn from a route handler).
+// 🔒 300 (2026-09-25): ОСНОВА ОТНОСИТЕЛЬНОГО АДРЕСА — ПУБЛИЧНЫЙ АДРЕС ВХОДА, А НЕ `request.url`. За туннелем Cloudflare
+// `request.url` — внутренний адрес службы (`localhost:<порт>`): выход вёл человека из интернета на петлю его же машины
+// (измерено: /logout → 307 https://localhost:24681/login). Публичный адрес — NEXTAUTH_URL; нет его — адрес запроса.
+// 🔒 И КУДА ВЕСТИ — ТОЛЬКО СВОИ: хост входа, хосты его зоны (`<элемент>.<зона>`, сама зона) и тот же хост на другом порту
+// (режим по IP). Прежде `redirectUrl` принимал любой внешний адрес — открытая переадресация от имени входа.
+function publicOrigin(request: Request): URL {
+  try {
+    if (process.env.NEXTAUTH_URL) return new URL(process.env.NEXTAUTH_URL);
+  } catch { /* неверный адрес в окружении — берём адрес запроса */ }
+  return new URL(request.url);
+}
+
+function isOwn(target: URL, origin: URL): boolean {
+  const host = origin.hostname;
+  const zone = host.startsWith("auth.") ? host.slice(5) : host;
+  return target.hostname === host || target.hostname === zone || target.hostname.endsWith(`.${zone}`);
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const redirectUrl = searchParams.get("redirectUrl") || "/login";
+  const origin = publicOrigin(request);
+  let target = new URL("/login", origin);
+  const wanted = searchParams.get("redirectUrl");
+  if (wanted) {
+    try {
+      const candidate = new URL(wanted, origin);
+      if (isOwn(candidate, origin)) target = candidate;
+    } catch { /* неразборчивый адрес — на форму входа */ }
+  }
 
   await signOut({ redirect: false });
-
-  // Relative fallbacks resolve against this auth host (the /login form) — harmless; the proxy
-  // always sends an absolute redirectUrl in practice.
-  return NextResponse.redirect(new URL(redirectUrl, request.url));
+  return NextResponse.redirect(target);
 }
