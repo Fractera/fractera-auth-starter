@@ -11,7 +11,10 @@ export async function POST(req: NextRequest) {
     console.warn(`[settings] сигнал CONFIG: забрать не удалось — ${r.reason}`)
     return NextResponse.json(r, { status: 502 })
   }
-  if (r.changed) revalidatePath("/", "layout")
+  // Перерисовка — по ЛЮБОМУ сигналу с ключом, а не только при изменении файла: собранные страницы могли быть
+  // построены по другому DESIGN-CONFIG (сборка читает не тот путь, что сервер), и «файл не изменился» не значит «страницы
+  // верны». ✗ Замерено на узле 2026-09-26: у данных файл уже нёс blocks, сигнал ответил «без изменений», страница осталась старой.
+  revalidatePath("/", "layout")
   console.log(`[settings] сигнал CONFIG: ${r.changed ? "настройки блоков обновлены — страницы перерисованы" : "без изменений"}`)
   return NextResponse.json(r)
 }
