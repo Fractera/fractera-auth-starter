@@ -1,5 +1,6 @@
 import { getDesignConfig } from "@/config/design-config"
 import { isDesignConfigEmpty, type DesignConfig } from "@/config/design-config.defaults"
+import LOCAL_FONTS from "@/lib/design/local-fonts.json"
 
 // ОФОРМЛЕНИЕ ВЛАДЕЛЬЦА → CSS. Одна функция превращает настройки в правила,
 // которые перекрывают тему проекта.
@@ -86,7 +87,7 @@ function colorVars(map: Record<string, string | undefined>): string[] {
 }
 
 /**
- * Полный текст правил и список адресов внешних шрифтов.
+ * Полный текст правил и список адресов шрифтов на своём сервере.
  *
  * 🔒 АДРЕСА ШРИФТОВ ВОЗВРАЩАЮТСЯ ОТДЕЛЬНО, А НЕ ОСТАЮТСЯ `@import`-ом. Приём
  * взят у образца и решает конкретную задержку: `@import` внутри `<style>`
@@ -132,9 +133,12 @@ export function buildDesignCss(cfg: DesignConfig = getDesignConfig()): {
     // браузера, то есть выглядит сломанной ровно там, где выбран «системный».
     const value = font.family.includes(",") ? font.family : `"${font.family}"`
     root.push(`  ${varName}: ${value};`)
-    if (typeof font.import === "string" && /^https:\/\/fonts\.(googleapis|gstatic)\.com\//.test(font.import)) {
-      fontLinks.push(font.import)
-    }
+    // 🔒 ШРИФТ ОТДАЁТ СВОЙ СЕРВЕР (шаг 315). Файлы лежат в `public/fonts/` (`scripts/local-fonts.mjs`), таблица —
+    // `lib/design/local-fonts.json`. Семейство ищется ПО ИМЕНИ, а не по `import`: в настройках, сохранённых до 315,
+    // там адрес Google — он не читается, подключается свой файл, переносить данные не нужно. Семейства нет в таблице — ссылки нет,
+    // и действует запасной системный шрифт: на чужой сервер страница не ходит ни при каком значении.
+    const local = LOCAL_FONTS.fonts.find(f => f.family === font.family)
+    if (local) fontLinks.push(`/fonts/${local.slug}.css`)
   }
 
   // Множитель шкалы — одно число на весь текст: примитив типографики считает

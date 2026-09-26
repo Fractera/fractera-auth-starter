@@ -23,3 +23,6 @@ tsconfig.tsbuildinfo
 Thumbs.db
 .next-a/
 .next-b/
+
+# 315: font files copied from @fontsource packages before each build (scripts/local-fonts.mjs)
+public/fonts/
