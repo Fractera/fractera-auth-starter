@@ -3,6 +3,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { PRESENTATION_LANGS } from "@/lib/presentation-langs"
 import { TriangleAlert } from "lucide-react"
+import { HeroCentered } from "@/components/hero-centered"
 
 // СТРАНИЦА-ПРЕЗЕНТАЦИЯ СЛУЖБЫ ВХОДА (узел Fractera; 280-10, оформление главной сайта — шаг 286).
 //
@@ -23,6 +24,12 @@ const WORDS = {
     risk: "Do this work early in the life of the application: it carries the highest risk. If sign-in breaks, nobody can use the protected routes — architects included. Sign-in can be restored through the development mode.",
     signIn: "Sign in",
     register: "Create an account",
+    pill: "Agentic engineering infrastructure",
+    steps: [
+      { title: "One sign-in", text: "The only service that grants access on the node" },
+      { title: "Roles", text: "Who reads and changes what is decided here" },
+      { title: "82 languages", text: "The sign-in screens speak the visitor's language" },
+    ],
   },
   ru: {
     title: "Служба входа",
@@ -31,6 +38,12 @@ const WORDS = {
     risk: "Эти задачи рекомендуется делать на ранней стадии работы приложения: у этой работы самая высокая группа риска. Если вы повредите авторизацию, пользователи вообще не смогут пользоваться защищёнными маршрутами — в том числе архитекторы. Восстановить авторизацию можно через режим разработки.",
     signIn: "Войти",
     register: "Создать аккаунт",
+    pill: "Инфраструктура агентной инженерии",
+    steps: [
+      { title: "Один вход", text: "Единственная служба, которая выдаёт доступ на узле" },
+      { title: "Роли", text: "Здесь решается, кто что читает и меняет" },
+      { title: "82 языка", text: "Экраны входа говорят на языке посетителя" },
+    ],
   },
 } as const
 
@@ -52,19 +65,8 @@ export default async function AuthPresentation({ params }: { params: Promise<{ l
   const w = WORDS[lang as Lang]
   return (
     <main className="flex flex-1 flex-col gap-10 bg-background px-6 py-12 text-foreground md:px-8 md:py-16">
-      {/* Первый экран — как у главной сайта, без картинки: заголовок и описание на всю ширину. */}
-      <header className="flex flex-col gap-6">
-        <h1 className="text-[39px] font-bold leading-[1.1] tracking-tight md:text-[47px] lg:text-[62px]">{w.title}</h1>
-        <p className="text-lg leading-relaxed text-muted-foreground md:text-xl">{w.lead}</p>
-        <div className="flex flex-wrap gap-3">
-          <Link href="/login" className="rounded-[var(--radius)] bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground">
-            {w.signIn}
-          </Link>
-          <Link href="/register" className="rounded-[var(--radius)] border border-border px-5 py-2.5 text-sm font-medium">
-            {w.register}
-          </Link>
-        </div>
-      </header>
+      {/* Первый экран по центру (304-4): «Войти» — главное действие, «Создать аккаунт» — второе. */}
+      <HeroCentered pill={w.pill} title={w.title} description={w.lead} cta={{ href: "/login", label: w.signIn, secondary: { href: "/register", label: w.register } }} steps={w.steps} />
 
       {/* Предупреждение — карточка в тоне «warning» слоя архитектора. */}
       <section className="flex gap-4 rounded-xl border border-destructive/40 bg-destructive/10 p-6">

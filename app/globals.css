@@ -77,3 +77,113 @@
   * { @apply border-border outline-ring/50; }
   body { @apply bg-background text-foreground; margin: 0; padding: 0; }
 }
+
+/* ═══ ПЕРВЫЙ ЭКРАН ПО ЦЕНТРУ (узел, шаг 304-4) — перенесено из дизайн-системы «Блоков» ═══ */
+:root {
+  /* Размеры заголовка первого экрана по центру (304-4) — те же числа, что у «Блоков» и root. */
+  --fs-hero-one: calc(1.95rem * var(--type-scale, 1));
+  --fs-hero-one-md: calc(2.4375rem * var(--type-scale, 1));
+  --fs-hero-one-lg: calc(2.925rem * var(--type-scale, 1));
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@property --pill-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.pill-ai {
+  position: relative;
+  isolation: isolate;
+}
+
+/* Каёмка. Заливка обрезается маской так, что видна только полоса шириной 1px по
+ * периметру — рамка есть, а фон под текстом остаётся фоном страницы. */
+.pill-ai::before,
+.pill-ai::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--pill-angle),
+    oklch(0.62 0.19 250),
+    oklch(0.68 0.24 330),
+    oklch(0.72 0.19 60),
+    oklch(0.68 0.16 285),
+    oklch(0.62 0.19 250)
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: pill-spin 8s linear infinite;
+}
+
+/* Второй слой — то же самое, но размытое: мягкое свечение под каёмкой. */
+.pill-ai::after {
+  padding: 0;
+  filter: blur(7px);
+  opacity: 0.35;
+  z-index: -1;
+  -webkit-mask: none;
+  mask: none;
+}
+
+@keyframes pill-spin {
+  to { --pill-angle: 360deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pill-ai::before,
+  .pill-ai::after { animation: none; }
+}
+
+/* 🔒 СВЕЧЕНИЕ ЗАГОЛОВКА — ТОКЕНОМ, А НЕ ЧИСЛОМ (шаг 508).
+ *
+ * Раньше обводка и тень H1 были записаны в `style` компонента как
+ * `rgba(139,92,246,…)` — цвет платформы, одинаковый в светлой и тёмной теме и у
+ * каждого клиента. Инлайн-стиль сильнее любого класса, поэтому переключатель
+ * темы на него не действовал вовсе: заголовок клиента светился нашим фиолетовым,
+ * что бы тот ни выбрал в настройках.
+ *
+ * `color-mix` разводит акцент проекта прозрачностью, поэтому эффект остаётся
+ * тем же, а цвет становится ЕГО цветом. */
+.h1-glow {
+  -webkit-text-stroke: 1px color-mix(in oklch, var(--color-primary) 80%, transparent);
+  paint-order: stroke fill;
+  text-shadow:
+    0 0 18px color-mix(in oklch, var(--color-primary) 55%, transparent),
+    0 0 36px color-mix(in oklch, var(--color-primary) 28%, transparent);
+}
+
+/* ─── ПЕРВЫЙ ЭКРАН ПО ЦЕНТРУ (блок hero-centered, образец владельца 2026-09-26) ───
+   Подсветка — два слоя фирменного цвета темы: широкое мягкое зарево и плотное ядро над заголовком. Края уходят
+   в полную прозрачность, поэтому у зарева нет видимой рамки ни в светлой, ни в тёмной теме. Цвет — только
+   `--color-primary` в разных долях: сменил владелец палитру — зарево сменилось вместе с ней. */
+.hero-ignite {
+  background: radial-gradient(ellipse 70% 60% at 50% 0%,
+    color-mix(in oklch, var(--color-primary) 22%, transparent) 0%,
+    color-mix(in oklch, var(--color-primary) 8%, transparent) 45%,
+    transparent 75%);
+}
+.hero-ignite-inner {
+  background: radial-gradient(ellipse 50% 40% at 50% 25%,
+    color-mix(in oklch, var(--color-primary) 18%, transparent) 0%,
+    transparent 70%);
+  filter: blur(24px);
+}
+/* Появление по очереди (задержка — у каждого элемента). Кадры — общие `fadeIn`. Без анимации тем, кто её отключил. */
+.hero-appear {
+  animation: fadeIn 0.6s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-appear { animation: none; }
+}
+
