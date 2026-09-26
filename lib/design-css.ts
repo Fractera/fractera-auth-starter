@@ -160,6 +160,16 @@ export function buildDesignCss(cfg: DesignConfig = getDesignConfig()): {
   if (safe(cfg.shape?.appWidth)) root.push(`  --app-w: ${cfg.shape.appWidth};`)
   if (safe(cfg.shape?.heroWidth)) root.push(`  --hero-w: ${cfg.shape.heroWidth};`)
 
+  // Настройки блоков (308): первый экран по центру — пиксели владельца в rem с общим множителем шрифтов.
+  const w = cfg.blocks?.heroOneWidth
+  if (typeof w === "number" && w >= 600 && w <= 2400) root.push(`  --hero-one-w: ${w}px;`)
+  const size = cfg.blocks?.heroOneSize ?? {}
+  const SIZE_VAR = { mobile: "--fs-hero-one", tablet: "--fs-hero-one-md", desktop: "--fs-hero-one-lg" } as const
+  for (const [k, v] of Object.entries(SIZE_VAR)) {
+    const px = size[k as keyof typeof SIZE_VAR]
+    if (typeof px === "number" && px >= 12 && px <= 120) root.push(`  ${v}: calc(${+(px / 16).toFixed(4)}rem * var(--type-scale));`)
+  }
+
   if (root.length) blocks.push(`:root {\n${root.join("\n")}\n}`)
 
   // 🔒 ТЁМНАЯ ТЕМА — ОТДЕЛЬНЫМ БЛОКОМ И ТОЛЬКО ЦВЕТА. Класс `.dark` ставит

@@ -92,6 +92,9 @@ export type DesignConfig = {
     appWidth?: string
     heroWidth?: string
   }
+
+  /** Настройки блоков (308): первый экран по центру — ширина и размер заголовка, px. Приходят из CONFIG на лету. */
+  blocks?: { heroOneWidth?: number; heroOneSize?: { mobile?: number; tablet?: number; desktop?: number } }
 }
 
 export const DEFAULT_DESIGN_CONFIG: DesignConfig = {
@@ -108,6 +111,7 @@ export function isDesignConfigEmpty(cfg: DesignConfig): boolean {
     Object.keys(cfg.colors?.dark ?? {}).length === 0 &&
     Object.keys(cfg.fonts ?? {}).length === 0 &&
     Object.keys(cfg.type ?? {}).length === 0 &&
-    Object.keys(cfg.shape ?? {}).length === 0
+    Object.keys(cfg.shape ?? {}).length === 0 &&
+    Object.keys(cfg.blocks ?? {}).length === 0
   )
 }

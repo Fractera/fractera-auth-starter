@@ -30,6 +30,7 @@ export function getDesignConfig(): DesignConfig {
       fonts: raw.fonts ?? {},
       type: raw.type ?? {},
       shape: raw.shape ?? {},
+      blocks: raw.blocks ?? {},
     } as DesignConfig
   } catch {
     return DEFAULT_DESIGN_CONFIG
