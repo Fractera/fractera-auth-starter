@@ -15,12 +15,14 @@ export type HeroCenteredProps = {
   steps?: readonly Step[]
 }
 
+// 🔒 ШИРИНА — ДО 1250px (владелец 2026-09-26: «сделай по умолчанию ширину максимум 1250»): секция, заголовок и полоса
+// шагов; описание уже — для удобства чтения. Число — переменная темы `--hero-one-w`, запасное значение 1250px.
 const TITLE =
-  "mx-auto max-w-4xl line-clamp-2 text-balance font-[family-name:var(--font-heading)] font-bold tracking-tight text-foreground text-[length:var(--fs-hero-one,1.95rem)] md:text-[length:var(--fs-hero-one-md,2.4375rem)] lg:text-[length:var(--fs-hero-one-lg,2.925rem)] leading-tight"
+  "mx-auto w-full line-clamp-2 text-balance font-[family-name:var(--font-heading)] font-bold tracking-tight text-foreground text-[length:var(--fs-hero-one,1.95rem)] md:text-[length:var(--fs-hero-one-md,2.4375rem)] lg:text-[length:var(--fs-hero-one-lg,2.925rem)] leading-tight"
 
 export function HeroCentered({ pill, title, description, cta, steps }: HeroCenteredProps) {
   return (
-    <section aria-labelledby="hero-t" className="relative isolate mx-auto mb-6 flex w-full max-w-5xl flex-col px-6 pt-10 pb-4 text-center">
+    <section aria-labelledby="hero-t" className="relative isolate mx-auto mb-6 flex w-full max-w-[var(--hero-one-w,1250px)] flex-col px-6 pt-10 pb-4 text-center">
       {/* Зарево начинается от верха страницы, а не от края секции: обрезанное, оно давало прямую кромку под шапкой. */}
       <div aria-hidden className="hero-ignite pointer-events-none absolute inset-x-0 -top-28 bottom-0 -z-10" />
       <div aria-hidden className="hero-ignite-inner pointer-events-none absolute inset-x-[15%] -top-28 bottom-0 -z-10" />
@@ -51,7 +53,7 @@ export function HeroCentered({ pill, title, description, cta, steps }: HeroCente
       )}
       {steps && (
         // Телефон — столбик строк с разделителями; с планшета — ряд из трёх колонок с разделителями между ними.
-        <ol className="hero-appear mx-auto mt-12 grid w-full max-w-3xl list-none divide-y divide-border/60 overflow-hidden rounded-3xl border border-border/60 bg-card/40 p-0 text-left backdrop-blur-md [animation-delay:0.8s] md:grid-cols-3 md:divide-x md:divide-y-0 md:text-center">
+        <ol className="hero-appear mx-auto mt-12 grid w-full list-none divide-y divide-border/60 overflow-hidden rounded-3xl border border-border/60 bg-card/40 p-0 text-left backdrop-blur-md [animation-delay:0.8s] md:grid-cols-3 md:divide-x md:divide-y-0 md:text-center">
           {steps.map((s, i) => (
             <li key={i} className="flex items-center gap-3 px-4 py-3.5 md:flex-col md:gap-2 md:px-6 md:py-5">
               <span className="font-mono text-xs text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>

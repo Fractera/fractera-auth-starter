@@ -84,6 +84,7 @@
   --fs-hero-one: calc(1.95rem * var(--type-scale, 1));
   --fs-hero-one-md: calc(2.4375rem * var(--type-scale, 1));
   --fs-hero-one-lg: calc(2.925rem * var(--type-scale, 1));
+  --hero-one-w: 1250px; /* ширина первого экрана по центру — владелец 2026-09-26 */
 }
 
 @keyframes fadeIn {
