@@ -1,23 +1,25 @@
-// НАСТРОЙКИ БЛОКОВ ИЗ CONFIG — НА ЛЕТУ (узел, шаг 308; слово владельца 2026-09-26: «если пользователь меняет … настройки
-// блоков … такой же процесс который позволит на литу применить изменения»).
+// ДИЗАЙН ПРОЕКТА — ИЗ ЭЛЕМЕНТА «ДИЗАЙН», НА ЛЕТУ (узел, шаг 309; слово владельца 2026-09-26: «любые микро сервисы … будут
+// менять свой дизайн а именно цвет шрифты отступы скругления … в тот момент когда микро сервис дизайн будет вносить изменения»).
 //
-// Служба берёт у элемента CONFIG ветку `blocks` дизайна (ширина и размеры первого экрана) и кладёт её в свой
-// `DESIGN-CONFIG` — тот же файл, куда ядро пишет остальное оформление. Когда: при старте (`instrumentation.ts`) и по
-// сигналу CONFIG «версия сменилась» (`/api/settings/changed`), после чего страницы перерисовываются без пересборки.
+// Служба берёт у элемента `design` решения владельца об оформлении — цвета (светлая и тёмная тема), шрифты, текст, формы и
+// настройки блоков — и кладёт их в свой `DESIGN-CONFIG`. Когда: при старте (`instrumentation.ts`) и по сигналу «версия
+// сменилась» (`/api/settings/changed`), после чего страницы перерисовываются без пересборки.
 // 🔒 Сигнал — не настройки: служба забирает их сама по MCP. Таймеров и опроса нет — только ответ на сохранение человеком.
-// 🔒 Берётся ТОЛЬКО ветка `blocks`: цвета, шрифты и формы по-прежнему присылает ядро (дверь `/api/settings/design`).
-// Перенос в другую службу и правила — `fractera-root-starter/lib/settings-listener.README.md` (тот же замысел).
+// 🔒 Файл целиком в руках элемента «Дизайн»: ветки, которых владелец не решал, убираются — действует тема службы. Так правка,
+// снятая в «Дизайне», снимается и здесь.
+// Элемента нет (`DESIGN_SERVICE_URL` пуст) — служба живёт своим `DESIGN-CONFIG`.
 import { readFileSync, writeFileSync, renameSync, mkdirSync, unlinkSync, existsSync } from "fs"
 import { dirname, join } from "path"
 import { timingSafeEqual } from "crypto"
 
+const BRANCHES = ["colors", "fonts", "type", "shape", "blocks"] as const
 const designPath = () => process.env.DESIGN_CONFIG_PATH ?? join(process.cwd(), "DESIGN-CONFIG", "design-config.json")
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v)
 
 async function callTool(name: string, args: Record<string, unknown>): Promise<unknown> {
-  const base = process.env.CONFIG_SERVICE_URL?.trim().replace(/\/+$/, "")
+  const base = process.env.DESIGN_SERVICE_URL?.trim().replace(/\/+$/, "")
   const key = process.env.SETTINGS_SECRET?.trim()
-  if (!base) throw new Error("no-config-element")
+  if (!base) throw new Error("no-design-element")
   if (!key) throw new Error("no-settings-key")
   const res = await fetch(`${base}/mcp`, {
     method: "POST",
@@ -36,24 +38,27 @@ async function callTool(name: string, args: Record<string, unknown>): Promise<un
   return JSON.parse(out)
 }
 
-export type BlockSettingsResult = { ok: true; changed: boolean } | { ok: false; reason: string }
+export type DesignFollowResult = { ok: true; changed: boolean } | { ok: false; reason: string }
 
-/** Забрать ветку `blocks` дизайна у CONFIG и записать в свой DESIGN-CONFIG. Отказ ничего не стирает. */
-export async function pullBlockSettings(): Promise<BlockSettingsResult> {
-  let blocks: unknown
+/** Забрать решения владельца об оформлении у элемента «Дизайн» и записать в свой DESIGN-CONFIG. Отказ ничего не стирает. */
+export async function pullDesign(): Promise<DesignFollowResult> {
+  let patch: Record<string, unknown>
   try {
-    const got = (await callTool("get_project_settings", { kind: "design" })) as { patches?: { design?: { blocks?: unknown } } }
-    blocks = got?.patches?.design?.blocks
+    const got = (await callTool("get_project_settings", { kind: "design" })) as { patches?: { design?: unknown } }
+    if (!isObj(got?.patches?.design)) return { ok: false, reason: "bad-answer" }
+    patch = got.patches.design
   } catch (err) {
     return { ok: false, reason: err instanceof Error ? err.message : String(err) }
   }
   const file = designPath()
   let current: Record<string, unknown> = {}
   try { const p = JSON.parse(readFileSync(file, "utf8")); if (isObj(p)) current = p } catch { /* файла нет — тема службы */ }
-  const next = { ...current }
-  if (isObj(blocks) && Object.keys(blocks).length) next.blocks = blocks
-  else delete next.blocks
-  if (JSON.stringify(next.blocks ?? null) === JSON.stringify(current.blocks ?? null)) return { ok: true, changed: false }
+  const next: Record<string, unknown> = { ...current }
+  for (const b of BRANCHES) {
+    if (isObj(patch[b]) && Object.keys(patch[b] as object).length) next[b] = patch[b]
+    else delete next[b]
+  }
+  if (JSON.stringify(next) === JSON.stringify(current)) return { ok: true, changed: false }
   const tmp = `${file}.${process.pid}.${Date.now()}.tmp`
   try {
     mkdirSync(dirname(file), { recursive: true })
@@ -66,8 +71,8 @@ export async function pullBlockSettings(): Promise<BlockSettingsResult> {
   return { ok: true, changed: true }
 }
 
-/** Подписаться на сигнал CONFIG. Зовётся при каждом старте: у CONFIG одна запись на службу. */
-export async function subscribeToConfig(who: string): Promise<{ ok: boolean; reason?: string; url?: string }> {
+/** Подписаться на сигнал элемента «Дизайн». Зовётся при каждом старте: у элемента одна запись на службу. */
+export async function subscribeToDesign(who: string): Promise<{ ok: boolean; reason?: string; url?: string }> {
   const port = Number(process.env.PORT)
   if (!Number.isInteger(port) || port <= 0) return { ok: false, reason: "no-port" }
   const url = `http://127.0.0.1:${port}/api/settings/changed`
