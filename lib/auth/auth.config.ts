@@ -5,6 +5,7 @@ import Resend from "next-auth/providers/resend";
 import { Resend as ResendClient } from "resend";
 import { compare } from "bcrypt-ts";
 import { getDb } from "@/lib/db";
+import { revokeUser } from "@/lib/sso";
 
 function buildProviders(): NextAuthConfig["providers"] {
   const providers: NextAuthConfig["providers"] = [];
@@ -138,6 +139,13 @@ export const authConfig: NextAuthConfig = {
         secure: process.env.COOKIE_SECURE === "true",
         domain: process.env.COOKIE_DOMAIN,
       },
+    },
+  },
+  // 328-2: выход в центре гасит билеты единого входа этого человека на всех доменах элементов.
+  events: {
+    signOut(message) {
+      const token = "token" in message ? message.token : null
+      if (token?.id) revokeUser(String(token.id))
     },
   },
   callbacks: {
