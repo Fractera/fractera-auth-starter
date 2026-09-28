@@ -100,8 +100,13 @@ export function revokeUser(userId: string): number {
 }
 
 /** Запрос с петли машины: хост — петля, заголовков сети Cloudflare нет. */
+// Сервер Next сам ставит `x-forwarded-host` (замер 328-2: запрос с петли получал отказ) — он допустим, если тоже петля.
+const LOOP = new Set(["127.0.0.1", "localhost", "[::1]"])
+const bare = (h: string | null) => (h ?? "").split(",")[0].trim().toLowerCase().replace(/:\d+$/, "")
+
 export function fromLoopback(req: NextRequest): boolean {
-  if (req.headers.get("cf-connecting-ip") || req.headers.get("cf-ray") || req.headers.get("x-forwarded-host")) return false
-  const host = (req.headers.get("host") ?? "").toLowerCase().replace(/:\d+$/, "")
-  return host === "127.0.0.1" || host === "localhost" || host === "[::1]"
+  if (req.headers.get("cf-connecting-ip") || req.headers.get("cf-ray")) return false
+  const fwd = req.headers.get("x-forwarded-host")
+  if (fwd && !LOOP.has(bare(fwd))) return false
+  return LOOP.has(bare(req.headers.get("host")))
 }
