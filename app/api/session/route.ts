@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
 import { shouldBypassAuth } from "@/lib/auth-bypass";
+import { userAlive } from "@/lib/guest-guard";
 
 const ALLOWED = (process.env.ALLOWED_ORIGINS ?? "")
   .split(",")
@@ -45,7 +46,8 @@ export const GET = auth(function GET(req) {
 
   const session = req.auth;
 
-  if (!session?.user) {
+  // 331-5: запись вытеснена (потолок гостей) или удалена — кука есть, человека нет.
+  if (!session?.user || !userAlive(session.user.id)) {
     return NextResponse.json({ error: "Unauthorized" }, {
       status: 401,
       headers: corsHeaders(origin),
