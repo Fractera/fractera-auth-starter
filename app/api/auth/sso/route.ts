@@ -5,7 +5,7 @@ import { allowedReturn, issueCode } from "@/lib/sso"
 // ВЫДАЧА КОДА ДОМЕНУ ЭЛЕМЕНТА (узел, шаг 328-2). Кнопка «Войти» на собственном домене элемента ведёт сюда с адресом возврата
 // (`return` — дверь элемента `/api/auth/callback`). Не вошёл — сначала страница входа этого центра, и сюда же обратно (тот же
 // источник — его отпускает `redirect` конфигурации). Вошёл — одноразовый код к адресу возврата и 302 туда. Адрес возврата —
-// только подключённые домены узла (`lib/sso.ts`); чужой — 400, без переадресации.
+// только подключённые домены узла (`lib/sso.ts`); чужой — 400, без переадресации. `guest=1` — вместо формы входа гость (331).
 
 export const GET = auth(function GET(req) {
   const ret = req.nextUrl.searchParams.get("return") ?? ""
@@ -14,6 +14,14 @@ export const GET = auth(function GET(req) {
   const base = process.env.NEXTAUTH_URL ?? req.url
   const user = req.auth?.user
   if (!user) {
+    // 🔒 331: ГОСТЕВАЯ ВЕТКА ЭЛЕМЕНТА (`guest=1`). Не форма входа, а гость: `/api/auth/guest` создаёт пользователя с ролью
+    // `guest` и возвращает сюда же с меткой `tried=1`, дальше — тот же код. Вернулся с меткой и без сессии (кука центра не
+    // легла) — назад на сайт БЕЗ кода: замок элемента скажет об отказе и не пойдёт снова; иначе каждый круг плодил бы гостя.
+    if (req.nextUrl.searchParams.get("guest") === "1") {
+      if (req.nextUrl.searchParams.get("tried") === "1") return NextResponse.redirect(target, 302)
+      const back = `/api/auth/sso?return=${encodeURIComponent(ret)}&guest=1&tried=1`
+      return NextResponse.redirect(new URL(`/api/auth/guest?redirectUrl=${encodeURIComponent(back)}`, base), 302)
+    }
     const again = `/api/auth/sso?return=${encodeURIComponent(ret)}`
     const role = req.nextUrl.searchParams.get("requireRole")
     const login = new URL(`/login?callbackUrl=${encodeURIComponent(again)}${role ? `&requireRole=${encodeURIComponent(role)}` : ""}`, base)
