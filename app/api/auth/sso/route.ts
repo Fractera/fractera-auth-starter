@@ -6,7 +6,6 @@ import { allowedReturn, issueCode } from "@/lib/sso"
 // (`return` — дверь элемента `/api/auth/callback`). Не вошёл — сначала страница входа этого центра, и сюда же обратно (тот же
 // источник — его отпускает `redirect` конфигурации). Вошёл — одноразовый код к адресу возврата и 302 туда. Адрес возврата —
 // только подключённые домены узла (`lib/sso.ts`); чужой — 400, без переадресации.
-export const dynamic = "force-dynamic"
 
 export const GET = auth(function GET(req) {
   const ret = req.nextUrl.searchParams.get("return") ?? ""

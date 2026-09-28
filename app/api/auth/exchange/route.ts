@@ -3,7 +3,6 @@ import { exchangeCode, fromLoopback } from "@/lib/sso"
 
 // ОБМЕН КОДА НА БИЛЕТ (узел, шаг 328-2). Зовёт только сервер элемента по петле машины: `{ code, origin }` → билет и кто это.
 // Код одноразовый и годится только для источника, которому выдан. Браузер сюда не допускается.
-export const dynamic = "force-dynamic"
 
 export async function POST(req: NextRequest) {
   if (!fromLoopback(req)) return NextResponse.json({ error: "loopback-only" }, { status: 403 })
