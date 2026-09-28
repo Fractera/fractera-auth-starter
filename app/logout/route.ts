@@ -1,3 +1,4 @@
+import { allowedReturn } from "@/lib/sso";
 import { NextResponse } from "next/server";
 import { signOut } from "@/lib/auth/auth";
 
@@ -26,10 +27,13 @@ function publicOrigin(request: Request): URL {
   return new URL(request.url);
 }
 
+// 328: свои — это ещё и собственные домены элементов узла (https, из их записей — тот же список, что у центра единого
+// входа). ✗ Найдено владельцем 2026-09-28: выход на aifa.dev уводил на throughsongs.com — адрес возврата считался чужим.
 function isOwn(target: URL, origin: URL): boolean {
   const host = origin.hostname;
   const zone = host.startsWith("auth.") ? host.slice(5) : host;
-  return target.hostname === host || target.hostname === zone || target.hostname.endsWith(`.${zone}`);
+  if (target.hostname === host || target.hostname === zone || target.hostname.endsWith(`.${zone}`)) return true;
+  return allowedReturn(target.toString()) !== null;
 }
 
 export async function GET(request: Request) {
