@@ -3879,7 +3879,14 @@ export function getAuthStrings(lang: string): AuthStrings {
 // Browser-language detector for client components. Reads navigator.language
 // (e.g. "pt-BR" → "pt"), returns the matching baked language or English. Static:
 // every language already lives in STRINGS, so this is a pure lookup, no fetch.
+// Node step 392 (owner 2026-10-04: «почини форму входа на английском при lang=ru»): the language the site passed in the link
+// (`?lang=ru` — the site's «Sign in» button) wins over the browser's: a visitor reading the site in Russian gets the form in
+// Russian even when the browser itself is set to English. Unknown or missing `lang` — the browser decides, as before.
 export function detectBrowserLang(): string {
+  if (typeof window !== "undefined") {
+    const asked = new URLSearchParams(window.location.search).get("lang")?.toLowerCase().split("-")[0];
+    if (asked && STRINGS[asked]) return asked;
+  }
   if (typeof navigator === "undefined") return DEFAULT_AUTH_LANG;
   const candidates = [navigator.language, ...(navigator.languages ?? [])];
   for (const c of candidates) {
@@ -3888,6 +3895,13 @@ export function detectBrowserLang(): string {
     if (STRINGS[primary]) return primary;
   }
   return DEFAULT_AUTH_LANG;
+}
+
+// Node step 392: links between the auth pages keep the `lang` the site passed — otherwise «Create an account» on a Russian
+// sign-in form opened the registration form in the browser's language.
+export function withLang(href: string, lang: string | null): string {
+  if (!lang) return href;
+  return `${href}${href.includes("?") ? "&" : "?"}lang=${encodeURIComponent(lang)}`;
 }
 
 // Simple placeholder substitution: t(s.welcomeToast, { who, role }).

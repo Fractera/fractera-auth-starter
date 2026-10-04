@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { register } from "@/lib/auth/register";
-import { getAuthStrings, detectBrowserLang, DEFAULT_AUTH_LANG, type AuthStrings } from "@/lib/i18n/auth-strings";
+import { getAuthStrings, detectBrowserLang, DEFAULT_AUTH_LANG, type AuthStrings, withLang } from "@/lib/i18n/auth-strings";
 import { SignedInGate } from "../../_components/signed-in-card.client";
 import { rememberSignedInHere } from "@/lib/auth/device-memory";
 
@@ -167,9 +167,10 @@ function RegisterForm() {
     window.location.href = pendingRedirect;
   };
 
-  const loginHref = callbackUrl
+  // 392: язык, переданный сайтом, едет и на форму входа.
+  const loginHref = withLang(callbackUrl
     ? `/login?callbackUrl=${encodeURIComponent(callbackUrl)}${requireRole !== "architect" ? `&requireRole=${requireRole}` : ""}`
-    : "/login";
+    : "/login", searchParams.get("lang"));
 
   return (
     <>

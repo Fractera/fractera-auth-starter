@@ -8,15 +8,15 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { getAuthStrings, detectBrowserLang, fill, DEFAULT_AUTH_LANG, type AuthStrings } from "@/lib/i18n/auth-strings";
 import { SignedInGate } from "../../_components/signed-in-card.client";
-import { STRINGS } from "@/lib/i18n/auth-strings";
+import { STRINGS, withLang } from "@/lib/i18n/auth-strings";
 import { rememberSignedInHere, signedInHereBefore } from "@/lib/auth/device-memory";
 
 // Адрес регистрации с сохранённым адресом возврата — один на кнопку, подсказку и
 // переход при пустой базе.
-function registerHrefFor(callbackUrl: string, requireRole: string): string {
-  return callbackUrl !== "/"
+function registerHrefFor(callbackUrl: string, requireRole: string, lang: string | null): string {
+  return withLang(callbackUrl !== "/"
     ? `/register?callbackUrl=${encodeURIComponent(callbackUrl)}${requireRole !== "architect" ? `&requireRole=${requireRole}` : ""}`
-    : "/register";
+    : "/register", lang);
 }
 
 function AccessDeniedModal({ onClose, s }: { onClose: () => void; s: AuthStrings }) {
@@ -88,7 +88,7 @@ function LoginForm() {
     setFirstTimeHint(!signedInHereBefore());
     fetch("/api/user-count", { cache: "no-store" })
       .then((r) => r.json())
-      .then((d: { count?: number }) => { if (d?.count === 0) window.location.replace(registerHrefFor(callbackUrl, requireRole)); })
+      .then((d: { count?: number }) => { if (d?.count === 0) window.location.replace(registerHrefFor(callbackUrl, requireRole, searchParams.get("lang"))); })
       .catch(() => {});
   }, [callbackUrl, requireRole]);
 
@@ -157,7 +157,7 @@ function LoginForm() {
   };
 
   // Preserve the return target when switching to the register form.
-  const registerHref = registerHrefFor(callbackUrl, requireRole);
+  const registerHref = registerHrefFor(callbackUrl, requireRole, searchParams.get("lang"));
 
   // When at least one provider (Google / magic-link) is configured, signing in
   // with it also REGISTERS the user on first use — so the separate Register step
