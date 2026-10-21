@@ -109,16 +109,34 @@ export function createGuest(id: string, email: string): { evicted: number } {
 const touched = (g.__guestTouch ??= new Map())
 const TOUCH_MS = 10 * 60 * 1000
 
-/** Запись есть — да; у гостя заодно отмечает активность не чаще раза в 10 минут (вытесняются давно неактивные). */
-export function userAlive(id: string | null | undefined): boolean {
-  if (!id) return false
+const rolesOf = (raw: string): string[] => {
+  try {
+    const r = JSON.parse(raw)
+    return Array.isArray(r) && r.every((x) => typeof x === "string") ? r : ["user"]
+  } catch {
+    return ["user"]
+  }
+}
+
+/**
+ * 559-1: запись есть и не заблокирована — её роли ИЗ БАЗЫ, иначе `null`. Отсюда заблокированный выходит отовсюду со следующего
+ * запроса (`/api/session`, билет домена элемента, код единого входа), а смена роли действует без нового входа: роли в куке входа
+ * записаны в момент входа и устаревают. У гостя заодно отмечает активность не чаще раза в 10 минут (вытесняются давно неактивные).
+ */
+export function liveUser(id: string | null | undefined): { roles: string[] } | null {
+  if (!id) return null
   const db = getDb()
-  const row = db.prepare("SELECT 1 AS ok FROM users WHERE id = ?").get(id) as { ok: number } | undefined
-  if (!row) { touched.delete(id); return false }
+  const row = db.prepare("SELECT roles, is_active FROM users WHERE id = ?").get(id) as { roles: string; is_active: number } | undefined
+  if (!row || row.is_active !== 1) { touched.delete(id); return null }
   const now = Date.now()
   if (now - (touched.get(id) ?? 0) > TOUCH_MS) {
     touched.set(id, now)
     db.prepare("UPDATE users SET last_login_at = datetime('now') WHERE id = ? AND provider = 'guest'").run(id)
   }
-  return true
+  return { roles: rolesOf(row.roles) }
+}
+
+/** Запись есть и не заблокирована — да (559-1: блокировка — отказ, как удалённая запись). */
+export function userAlive(id: string | null | undefined): boolean {
+  return liveUser(id) !== null
 }

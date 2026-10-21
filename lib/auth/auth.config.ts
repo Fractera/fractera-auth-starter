@@ -46,20 +46,29 @@ function buildProviders(): NextAuthConfig["providers"] {
 
         const db = getDb();
         const user = db
-          .prepare("SELECT id, email, nickname, password, roles FROM users WHERE email = ?")
+          .prepare("SELECT id, email, nickname, password, roles, provider, is_active FROM users WHERE email = ?")
           .get(email) as {
           id: string;
           email: string;
           nickname: string | null;
           password: string | null;
           roles: string;
+          provider: string;
+          is_active: number;
         } | undefined;
 
         if (!user) return null;
 
+        // 559-1 (правка канона по слову владельца 2026-10-21: «Три правки + новый ключ»): заблокированный не входит.
+        if (user.is_active !== 1) return null;
+
         const roles = JSON.parse(user.roles) as string[];
 
         if (!user.password) {
+          // 559-1: вход БЕЗ пароля — только у гостя (`/api/auth/guest` зовёт signIn("credentials", { email })). ✗ Измерено на копии
+          // базы: прежде эта ветка пускала по одному email любую запись без пароля — пользователей Google и письма, в том числе
+          // архитектора, с любым паролем в форме.
+          if (user.provider !== "guest") return null;
           return { id: user.id, email: user.email, name: user.nickname, roles };
         }
 
@@ -149,6 +158,16 @@ export const authConfig: NextAuthConfig = {
     },
   },
   callbacks: {
+    // 559-1: заблокированный не входит и через Google или письмо. Своей записи ещё нет (первый вход) — вход как прежде.
+    // Пароль и гость проверяются в `authorize` выше, токен архитектора — своим провайдером.
+    signIn({ user, account }) {
+      if (!account || account.type === "credentials") return true;
+      const db = getDb();
+      const byId = user?.id ? (db.prepare("SELECT is_active FROM users WHERE id = ?").get(user.id) as { is_active: number } | undefined) : undefined;
+      const mail = user?.email?.trim().toLowerCase();
+      const row = byId ?? (mail ? (db.prepare("SELECT is_active FROM users WHERE email = ?").get(mail) as { is_active: number } | undefined) : undefined);
+      return !row || row.is_active === 1;
+    },
     // OAuth / magic-link complete on the auth host (auth.<domain>) but usually
     // need to land back on a sibling subdomain (the Shell or Admin). The default
     // NextAuth redirect callback only allows same-origin, which would drop a

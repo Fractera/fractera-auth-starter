@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
 import { shouldBypassAuth } from "@/lib/auth-bypass";
-import { userAlive } from "@/lib/guest-guard";
+import { liveUser } from "@/lib/guest-guard";
 
 const ALLOWED = (process.env.ALLOWED_ORIGINS ?? "")
   .split(",")
@@ -47,19 +47,21 @@ export const GET = auth(function GET(req) {
 
   const session = req.auth;
 
-  // 331-5: запись вытеснена (потолок гостей) или удалена — кука есть, человека нет.
-  if (!session?.user || !userAlive(session.user.id)) {
+  // 331-5: запись вытеснена (потолок гостей) или удалена — кука есть, человека нет. 559-1: заблокирована — так же.
+  const live = session?.user ? liveUser(session.user.id) : null;
+  if (!session?.user || !live) {
     return NextResponse.json({ error: "Unauthorized" }, {
       status: 401,
       headers: corsHeaders(origin),
     });
   }
 
+  // 559-1: роли — из базы, а не из куки входа: смена роли действует со следующего запроса. Форма ответа прежняя.
   return NextResponse.json(
     {
       userId: session.user.id,
       email: session.user.email,
-      roles: (session.user as { roles?: string[] }).roles ?? ["user"],
+      roles: live.roles,
     },
     { headers: corsHeaders(origin) }
   );

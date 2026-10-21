@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
 import { shouldBypassAuth } from "@/lib/auth-bypass";
+import { userAlive } from "@/lib/guest-guard";
 
 // Lightweight session-validity endpoint, designed for nginx `auth_request`.
 //
@@ -29,7 +30,8 @@ export const GET = auth(function GET(req) {
   if (shouldBypassAuth()) {
     return new NextResponse(null, { status: 204 });
   }
-  if (!req.auth?.user) {
+  // 559-1: этой дверью узнают посетителя элементы из своего репозитория (FRACTERA.md) — заблокированный и удалённый здесь тоже 401.
+  if (!req.auth?.user || !userAlive(req.auth.user.id)) {
     return new NextResponse(null, { status: 401 });
   }
   return new NextResponse(null, { status: 204 });
