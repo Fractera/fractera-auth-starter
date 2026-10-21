@@ -6,6 +6,7 @@ import { Resend as ResendClient } from "resend";
 import { compare } from "bcrypt-ts";
 import { getDb } from "@/lib/auth/db";
 import { revokeUser } from "@/lib/sso";
+import { recordSignIn } from "@/lib/auth/users-journal";
 
 function buildProviders(): NextAuthConfig["providers"] {
   const providers: NextAuthConfig["providers"] = [];
@@ -155,6 +156,15 @@ export const authConfig: NextAuthConfig = {
     signOut(message) {
       const token = "token" in message ? message.token : null
       if (token?.id) revokeUser(String(token.id))
+    },
+    // 559-2: вход состоялся — способ и время в таблицах пользователей (`lib/auth/users-journal.ts`). Событие, а не проверка: на сам
+    // вход не влияет, его отказ входа не отменяет.
+    signIn({ user, account, profile }) {
+      try {
+        recordSignIn(user?.id ?? undefined, account?.provider, (profile ?? null) as Record<string, unknown> | null)
+      } catch (e) {
+        console.warn(`[users] вход не записан в журнал: ${e instanceof Error ? e.message : String(e)}`)
+      }
     },
   },
   callbacks: {

@@ -1,4 +1,5 @@
 import { getDb } from "./index";
+import { migrateUsersJournal } from "./users-schema";
 
 export function runMigrations() {
   const db = getDb();
@@ -62,4 +63,7 @@ export function runMigrations() {
       db.exec(`ALTER TABLE accounts ADD COLUMN ${col} TEXT`);
     }
   }
+
+  // 559-2: свойства и истории пользователей узла — таблицы, триггеры, засев существующих (`users-schema.ts`).
+  migrateUsersJournal(db);
 }
