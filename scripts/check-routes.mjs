@@ -107,6 +107,7 @@ const ALLOWED = new Map([
   ['app/api/user-count/route.ts', 'auth: сколько учётных записей — первый запуск (549-5)'],
   ['app/api/admin/users/route.ts', 'auth: список и создание пользователей — только admin (549-5)'],
   ['app/api/admin/users/[id]/route.ts', 'auth: правка и удаление пользователя — только admin (549-5)'],
+  ['app/api/node-users/[[...path]]/route.ts', 'auth: пользователи узла для вкладки ядра — список, истории, организации, пакет (559-3)'],
 ])
 
 const found = []

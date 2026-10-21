@@ -674,7 +674,8 @@ export const config = {
 // Everything else — the template's own doors and pages — goes through the template proxy unchanged.
 const SESSION_COOKIES = ["__Secure-authjs.session-token", "authjs.session-token"]
 const AUTH_PAGES = new Set(["/login", "/register", "/signout", "/guest-login", "/logout"])
-const AUTH_API = ["/api/auth", "/api/session", "/api/user-count", "/api/admin"]
+// 559-3: `/api/node-users` — дверь пользователей узла для ядра; стережёт себя сама (ключ архитектора, только петля машины).
+const AUTH_API = ["/api/auth", "/api/session", "/api/user-count", "/api/admin", "/api/node-users"]
 // Two template doors live under /api/auth and keep the template gate: the return from the node centre and the guest leave.
 const TEMPLATE_AUTH_API = new Set(["/api/auth/callback", "/api/auth/guest-leave"])
 const LANG_SEGMENT = /^\/([a-z]{2})(\/.*)?$/

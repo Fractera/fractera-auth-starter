@@ -2,6 +2,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
 import { getDb } from "@/lib/auth/db";
+import { runBatch } from "@/lib/auth/node-users";
+import { revokeUser } from "@/lib/sso";
 
 export const PATCH = auth(async function PATCH(req, context) {
   const session = req.auth;
@@ -102,9 +104,12 @@ export const DELETE = auth(async function DELETE(req, context) {
   const currentUserId = (session.user as { id?: string }).id;
   if (id === currentUserId) return NextResponse.json({ error: "Cannot delete your own account" }, { status: 400 });
 
+  // 559-3 (владелец 2026-10-21: «Удаление пользователя возможно только таким образом чтобы удалялись имя, фамилии, аватарка, способ
+  // авторизации, но сохранялся бы идентификатор псевдоним и логи»): удаление здесь — то же обезличивание, что у вкладки ядра.
   const db = getDb();
-  const result = db.prepare("DELETE FROM users WHERE id = ?").run(id);
-  if (result.changes === 0) return NextResponse.json({ error: "User not found" }, { status: 404 });
-
-  return NextResponse.json({ ok: true });
+  const r = runBatch(db, { id: String(currentUserId ?? ""), roles }, "anonymize", [id], undefined);
+  if ("error" in r) return NextResponse.json({ error: r.error }, { status: 400 });
+  if (r.skipped.some((s) => s.reason === "not-found")) return NextResponse.json({ error: "User not found" }, { status: 404 });
+  for (const u of r.revoke) revokeUser(u);
+  return NextResponse.json({ ok: true, anonymized: r.done.length === 1 });
 });
