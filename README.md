@@ -6,6 +6,23 @@ its doors, forms and storage did not change (the forms were moved byte for byte 
 
 **Two services handing out entry on one machine equal no authentication at all.** There is exactly one of these per node.
 
+## In the Fractera project
+
+The node's only sign-in service. Every element and the core ask it who came and with which roles, and the tab Users of this element in the core shows and changes every account of the node. Without it nobody signs in anywhere on the node.
+
+You can change it. The code is open under the MIT license and the copy on your node is yours. The node installs this element from
+this repository by the tag written in `WEB4-ITEMS-REGISTRY/web4-items.json` of the core; the core does not let you delete a built-in
+element or move its address.
+
+To change it, open it in the core (left menu, Native items, Authorization), go to Build and tell its agent in the terminal what you need.
+The agent edits the element folder `WEB4-ITEMS/core/auth` and commits. The sign-in forms, the adapter and the registration are a proven canon: change them on purpose only, and prove the change on a copy of the database first. A person is deleted only by anonymization.
+
+The change goes live when you press Deploy in Build, Deployments: the element is rebuilt beside the running one and switched over in
+seconds. Other elements call its doors by address, request and answer, so a change to a door breaks every element that uses it;
+that is a decision for the node owner, while a change inside the element is ordinary work. To keep your version when the node is
+reinstalled, save the element to your own GitHub repository in Build, GitHub. A newer Fractera version arrives through Update, which
+merges it with your commits, and the element's agent resolves a conflict.
+
 ## What it gives
 
 | Door | Answers |
