@@ -1,3 +1,4 @@
+import "server-only"
 import { getDesignConfig } from "@/config/design-config"
 import { isDesignConfigEmpty, type DesignConfig } from "@/config/design-config.defaults"
 import LOCAL_FONTS from "@/lib/design/local-fonts.json"
@@ -164,7 +165,8 @@ export function buildDesignCss(cfg: DesignConfig = getDesignConfig()): {
   if (safe(cfg.shape?.appWidth)) root.push(`  --app-w: ${cfg.shape.appWidth};`)
   if (safe(cfg.shape?.heroWidth)) root.push(`  --hero-w: ${cfg.shape.heroWidth};`)
 
-  // Настройки блоков (308): первый экран по центру — пиксели владельца в rem с общим множителем шрифтов.
+  // Настройки блоков (308-1): первый экран по центру. Пиксели владельца — в rem с общим множителем шрифтов, чтобы
+  // `--type-scale` продолжал двигать и этот заголовок. Границы — вне их страница ломается, а не «становится другой».
   const w = cfg.blocks?.heroOneWidth
   if (typeof w === "number" && w >= 600 && w <= 2400) root.push(`  --hero-one-w: ${w}px;`)
   const size = cfg.blocks?.heroOneSize ?? {}

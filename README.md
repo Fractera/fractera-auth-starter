@@ -1,27 +1,37 @@
 # Fractera Auth — the service that hands out entry
 
-A replaceable microservice. It owns sign-in, sessions and roles for one Fractera node, and nothing
-else. The node never imports its code: it knows one address and one contract.
+The node's sign-in service: sign-in, sessions and roles for one Fractera node, and nothing else. Every element of the node asks it
+who came; no other element signs people in. Since **v2.0.0** (node step 549-5) it is built on the Fractera native element template;
+its doors, forms and storage did not change (the forms were moved byte for byte — the proven sign-in canon is not improved in passing).
 
-**Two services handing out entry on one machine equal no authentication at all.** There is exactly one
-of these per node.
+**Two services handing out entry on one machine equal no authentication at all.** There is exactly one of these per node.
 
 ## What it gives
 
 | Door | Answers |
 |---|---|
-| `GET /api/session` | the current session, or `401` |
-| `POST /api/session/verify` | verification of a session token, for another service |
-| `ANY /api/auth/[...nextauth]` | the NextAuth pipeline: providers, callbacks, sign-out |
-| `GET /api/auth/methods` | which sign-in methods this installation actually offers |
-| `POST /api/auth/guest` | a guest session |
-| `POST /api/auth/architect` | a session for the architect layer, by `ARCHITECT_TOKEN` |
-| `GET|POST /api/admin/users` | the user list and user creation, admin only |
+| `GET /api/session` | the current session, or `401` — every element asks it |
+| `GET /api/session/verify` | verification of a session token, for another service |
+| `GET|POST /api/auth/[...nextauth]` | the NextAuth pipeline: providers, callbacks, session, sign-out |
+| `GET /api/auth/methods` | which sign-in methods this installation offers — also the node watcher's health door |
+| `GET /api/auth/guest` · `POST /api/auth/guest/leave` | a guest session · its end (loopback only) |
+| `GET /api/auth/architect` | a session for the architect layer, by `ARCHITECT_TOKEN` |
+| `GET /api/auth/sso` · `POST /api/auth/exchange` · `GET /api/auth/ticket` | single sign-on for an element on its own domain: a one-time code, its exchange for a ticket, the ticket check |
+| `GET /api/admin/users` · `PATCH|DELETE /api/admin/users/<id>` | the user list and its changes, admin only |
 | `GET /api/user-count` | how many accounts exist — used to decide first run |
-| `/login` · `/register` · `/logout` | the pages a person sees |
+| `/login` · `/register` · `/signout` · `/guest-login` · `/logout` | the pages a person sees |
+| `/` | the signed-in card; without a session cookie `307` to `/<default language>` |
+| `/en`, `/ru` | the public home page of the element (catalog blocks, `app/[lang]/(publicLayer)/_data`) |
+| `GET|PATCH /api/settings/design` · `POST /api/settings/changed` | the template doors of the own DESIGN-CONFIG and the design/settings signal (key `X-Settings-Key`) |
 
-The full passport is `OWN-SERVICE-PROPS.json`. It is written by the author of this service and read —
-never edited — by whoever installs it.
+Where it lives: the forms and their root layout — `app/(auth)/`; sign-out — `app/logout/`; the doors — `app/api/{auth,session,user-count,admin}/`;
+the server logic — `lib/auth/*` (NextAuth config, SQLite adapter, registration, roles), `lib/auth/db/` (the database), `lib/sso.ts`,
+`lib/guest-guard.ts`, `lib/i18n/auth-strings.ts`. `proxy.ts` answers the sign-in service's own paths first (its template part would
+send /login to the auth host — itself — and ask itself who came on every /api request), then hands the rest to the template proxy.
+The passport is `OWN-SERVICE-PROPS/`, the node contract `NODE-CONTRACT.json`.
+
+🛑 Single sign-on codes and tickets live in the memory of the process: a restart of this element ends them, and a person on an
+element's own domain signs in again (as before v2.0.0).
 
 ## 82 languages, and they are not negotiable
 
@@ -32,34 +42,9 @@ entry. Adding a language means adding one entry to `STRINGS`.
 **Do not reduce this set.** A node under construction may well ship two languages; this service is
 finished, and trimming a finished product is damage, not tidying.
 
-## Installed by the node, not by hand
-
-The normal way in is the node's one command:
-
-```
-npm run services:install
-```
-
-It clones this repository at the version pinned in the node's `MICROSERVICES.json`, assigns a port
-from the block `24680–24699`, reads `.env.example`, and writes `.env.local` here.
-
-🛑 **`.env.local` is a generated file.** Editing it by hand works until the next install and then
-disappears without a word. Change the node's registry instead.
-
-## Running it alone (for developing this service)
-
-```
-npm ci
-cp .env.example .env.local     # then fill the values in by hand
-npm run build
-npm run start
-```
-
-The port is whatever `npm run start` is told; nothing inside this repository remembers a port number.
-
 ## Storage
 
-SQLite, one file, `data/auth.db`. The schema is executed at start — there are no migrations, and
+SQLite, one file — `DATABASE_URL` (the node gives `<node>/data/services/auth/auth.db`; without it `data/auth.db` here). The schema is executed at start — there are no migrations, and
 `data/` never enters git. `better-sqlite3` is a native module: it is loaded lazily, so a machine
 without a build toolchain fails at the data layer and not at startup.
 
@@ -92,6 +77,38 @@ Data an element kept for an evicted or deleted guest is not cleaned here: an ele
 
 ## Where it came from
 
-Moved out of `ai-workspace/services/auth` on 2026-09-20 (step 257-1), unchanged: same code, same
-dependencies, same 82 languages. What was added at the move: this README, the passport, the marked
-`.env.example`, and the empty `architect-pages/` folder.
+Moved out of `ai-workspace/services/auth` on 2026-09-20 (step 257-1). Ported onto the native element template
+`fractera-native-item-starter` v0.1.15 on 2026-10-21 (node step 549-5): same doors, same forms, same database, same 82 languages.
+
+---
+
+# fractera-native-item-starter
+
+The reference starter template of a Fractera native element. Native elements are the root elements of a node: they stand on
+every node, they come only from the Fractera repository, and they are never sold and never join an outside network. They serve
+the person and the other elements of their own node. Custom elements are born from `fractera-custom-item-starter` by the node's
+button «Create WEB4 ITEM»; native ones are added from here.
+
+The template is the custom reference template without the network parts: no showcase or Nostr fields in the passport
+(`visibility: node`, `messengers: { h2a: true, h2h: false, a2a: false }`), no messenger between people, no work for outside agents
+and no order summaries. The home page shows one line, «Reference native template», and the yellow starter sign.
+
+## The contract a replacement must keep
+
+- `OWN-SERVICE-PROPS/` — the passport, the element's main door (`GET /api/own-service-props`); `NODE-CONTRACT.json` — what the node needs to install it.
+- The port comes from the `PORT` environment variable.
+- `GET /api/health` answers 200 without a session.
+- Sign-in only through the node's auth element; stored data only through the node's data element.
+- Public pages stay static.
+
+A repository that does not keep this contract is refused; the node does not bend to it.
+
+## Run on its own
+
+```
+npm install
+npm run build
+PORT=24683 node .next/standalone/server.js
+```
+
+License: MIT.

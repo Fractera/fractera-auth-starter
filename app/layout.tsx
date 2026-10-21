@@ -1,33 +1,16 @@
-import type { Metadata } from "next";
-import { Toaster } from "sonner";
-import "./globals.css";
-import { buildDesignCss } from "@/lib/design-css";
-import { ThemeInit, AppWidthInit } from "@/components/shell/shell-init";
+import "../styles/index.css";
 
-export const metadata: Metadata = {
-  title: "Fractera — Sign in",
-};
-
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
-  const { css: designCss, fontLinks: designFontLinks } = buildDesignCss();
-  return (
-    // suppressHydrationWarning: класс `dark` на <html> ставит скрипт темы до гидратации (285-2).
-    <html lang="en" suppressHydrationWarning>
-      {/* 280-10: оформление из DESIGN-CONFIG службы — то же, что у сайта узла, если ядро его прислало. */}
-      <head>
-        {/* 285-2/285-3: тема и ширина — выбор посетителя на весь проект (cookie проекта), до первого кадра,
-            на ВСЕХ страницах входа, включая /login и /register. */}
-        <ThemeInit />
-        <AppWidthInit />
-        {designCss && <style dangerouslySetInnerHTML={{ __html: designCss }} />}
-        {designFontLinks.map((href) => (
-          <link key={href} rel="stylesheet" href={href} />
-        ))}
-      </head>
-      <body>
-        {children}
-        <Toaster position="top-center" richColors />
-      </body>
-    </html>
-  );
+// Bare pass-through root layout (step 131 — static-rendering refactor; mirrors
+// 22slots + FES). It renders NO <html>/<body> and calls NO dynamic functions, so it
+// never opts the app into dynamic rendering and never locks a single <html lang> for
+// the whole route tree. Each zone owns its own root layout with its own <html>:
+//   app/[lang]   → <html lang={validLang}>  (validated route param)
+//   app/(service) → <html lang="en">         (architect-only, English)
+// styles/index.css is imported here once so it applies across every zone.
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return children;
 }

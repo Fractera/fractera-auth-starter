@@ -1,7 +1,7 @@
 import type Database from "better-sqlite3"
 import { readFileSync, statSync } from "node:fs"
 import { dirname, join } from "node:path"
-import { getDb } from "@/lib/db"
+import { getDb } from "@/lib/auth/db"
 import { revokeUser } from "@/lib/sso"
 
 // ЗАЩИТА ОТ ЗАТОПЛЕНИЯ ГОСТЯМИ (узел, шаги 331-4, 331-5). ✗ Замерено 331-3: один голый GET `/api/auth/guest` без куки создавал

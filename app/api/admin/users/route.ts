@@ -1,6 +1,7 @@
+// @api list and create user accounts of the node for the admin
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
-import { getDb } from "@/lib/db/index";
+import { getDb } from "@/lib/auth/db";
 
 export const GET = auth(function GET(req) {
   const session = req.auth;

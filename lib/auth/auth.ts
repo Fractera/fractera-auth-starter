@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import { decode as defaultDecode } from "next-auth/jwt";
 import { authConfig } from "./auth.config";
 import { SqliteAdapter } from "./sqlite-adapter";
-import { getDb } from "@/lib/db";
+import { getDb } from "@/lib/auth/db";
 
 // 🔒 КУКА ОТ ПРОШЛОГО СЕРВЕРА НЕ ИМЕЕТ ПРАВА ЗАПИРАТЬ ВЛАДЕЛЬЦА (2026-08-20).
 //

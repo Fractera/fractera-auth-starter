@@ -1,3 +1,4 @@
+// @api create a guest session for a visitor without an account
 import { NextResponse } from "next/server";
 import { auth, signIn } from "@/lib/auth/auth";
 import { nanoid } from "nanoid";

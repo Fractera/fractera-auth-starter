@@ -1,25 +1,50 @@
-import type { NextConfig } from "next";
+import path from "node:path"
+import type { NextConfig } from "next"
 
-// Path-based routing (process.env.BASE_PATH set in .env.local):
-// - basePath rewrites URLs to /auth/* but conflicts with NextAuth v5
-//   (it returns "Bad request." because NEXTAUTH_URL must match exactly).
-// - Solution: keep auth service at root paths (no basePath in Next.js),
-//   but use assetPrefix so /_next/* assets get a unique URL prefix that
-//   nginx can route to the auth service exclusively.
-// - Nginx config: location /_auth_next/ → 3001, location /api/auth/ → 3001,
-//   location /auth/ → 3001 with rewrite ^/auth/(.*) /$1 break.
-// 295: Next 16 Cache Components — кэш только через 'use cache' + cacheLife; старые настройки маршрута запрещены.
+// The node starts this site with the standalone server: it reads PORT and HOSTNAME
+// from the environment, which is exactly how the node assigns a port. `next start`
+// refuses to run with `output: standalone`, so the passport names the server file.
+//
+// The ROOT IS THIS FOLDER, named explicitly. Inside a node the site lives in
+// WEB4-ITEMS/core/root, and Next, seeing the node's lockfile above, took the node for
+// the project root and tried to compile the node's own proxy.ts.
+const root = path.resolve(__dirname)
+
 const nextConfig: NextConfig = {
-  cacheComponents: true,
+  output: "standalone",
+  // 280-9: the node builds this site into a NEIGHBOUR folder (.next-a / .next-b) while the running
+  // build keeps serving — no downtime. Unset, it is the usual .next.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
+  outputFileTracingRoot: root,
+  // 314-2: данные страниц (JSON дерева) едут в standalone-сборку — запасной источник, когда `ELEMENT_DIR` не задан.
+  outputFileTracingIncludes: {
+    '/**': ['./app/**/_data/*.json', './app/**/_pages/**/*.json'],
+    // 458-3: шрифт сниппетов читается с диска (lib/snippet/render.mjs), сборщик сам его не находит.
+    '/[lang]/**': ['./node_modules/@fontsource/inter/files/inter-*-normal.woff'],
+  },
+  turbopack: { root },
   serverExternalPackages: ["better-sqlite3"],
-  ...(process.env.BASE_PATH
-    ? { assetPrefix: "/_auth_next" }
-    : {
-        output: "standalone",
-        // Узел Fractera (280-9/280-10): сборка в соседнюю папку, пока прежняя работает.
-        distDir: process.env.NEXT_DIST_DIR || ".next",
-      }),
-  allowedDevOrigins: ["auth.partner.fractera.local"],
-};
 
-export default nextConfig;
+  // Old addresses live in other people's bookmarks: they answer with a permanent
+  // redirect, not a 404.
+  async redirects() {
+    return [
+      { source: "/:lang/architecture", destination: "/:lang/m2m", permanent: true },
+      { source: "/:lang/architecture/index.md", destination: "/:lang/m2m/index.md", permanent: true },
+      // The architect pages live in the node's core (280), on its own address. The installer
+      // writes that address into ARCHITECT_URL; without it the link has nowhere to go and
+      // no rule is made, so the page answers 404 instead of pointing at a wrong host.
+      ...(process.env.ARCHITECT_URL
+        ? [{ source: "/:lang/architect/:path*", destination: process.env.ARCHITECT_URL.replace(/\/+$/, "") + "/:lang/architect/:path*", permanent: false }]
+        : []),
+    ]
+  },
+
+  // The build moment is computed once, here: `/api/health` reports when the site
+  // was BUILT, not when the process started.
+  env: {
+    NEXT_PUBLIC_BUILT_AT: new Date().toISOString(),
+  },
+}
+
+export default nextConfig

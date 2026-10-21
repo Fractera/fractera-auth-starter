@@ -1,0 +1,162 @@
+{
+  "_": "Node contract of this element (step 417): what the node needs to install, run and manage it. Read by the node core only; never served to the outside. The public description is OWN-SERVICE-PROPS/.",
+  "kind": "microservice",
+  "entry": "global",
+  "port": {
+    "desired": 24681,
+    "note": "A wish, not a decision. The node assigns the actual port from the block 24680-25679. Ask the node, never remember."
+  },
+  "env": {
+    "file": ".env.local",
+    "example": ".env.example",
+    "note": "Next reads .env.local by its own convention."
+  },
+  "health": {
+    "path": "/api/auth/methods",
+    "expect": 200,
+    "note": "The former door of the sign-in service (v1.3.23): it runs the service's own logic and needs neither a session nor a key; /api/session answers 401 without a session. /api/health of the template answers too."
+  },
+  "runtime": {
+    "stack": "next",
+    "node": ">=20",
+    "build": "npm run build",
+    "start": "node .next/standalone/<traced path>/server.js",
+    "startNote": "The standalone server reads PORT and HOSTNAME from the environment. The installer finds server.js under .next/standalone and copies .next/static next to it.",
+    "nativeModules": [
+      "better-sqlite3"
+    ],
+    "distDirEnv": "NEXT_DIST_DIR",
+    "distDirNote": "The node builds into a neighbour folder named by this variable while the old build serves, then switches: no downtime. A replacement that does not declare it is stopped for the build."
+  },
+  "settings": {
+    "door": "/api/settings/design",
+    "key": {
+      "header": "X-Settings-Key",
+      "env": "SETTINGS_SECRET"
+    },
+    "owns": [
+      "DESIGN-CONFIG"
+    ],
+    "note": "549-5: the template door of the own DESIGN-CONFIG, the same contract as the former door (key, GET and PATCH). The design element signals /api/settings/changed."
+  },
+  "contract": [
+    "Takes its port from the environment; never remembers a number.",
+    "Answers GET /api/auth/methods and GET /api/health with 200 without a session.",
+    "IS the node's sign-in service: the only element that hands out entry. Two sign-ins on a node are no sign-in.",
+    "Keeps accounts in its own SQLite file (DATABASE_URL) — the one named exception to «stored data only through the data element»: the sign-in service must work before any other element.",
+    "Public pages stay static: no force-dynamic, no cookies() or headers() in a layout or a page; the form pages and the signed-in card are its own root pages.",
+    "Reads its own name from this passport at start (lib/own-id.ts); no name of the element is written in its code."
+  ],
+  "languages": {
+    "count": 82,
+    "source": "lib/i18n/auth-strings.ts",
+    "note": "The sign-in forms speak 82 languages (owner 2026-09-20: reducing this set is forbidden). The public home page speaks this site's own set (NEXT_PUBLIC_SUPPORTED_LANGUAGES, en and ru)."
+  },
+  "license": "MIT",
+  "storage": {
+    "engine": "sqlite",
+    "file": "DATABASE_URL (the node writes <node>/data/services/auth/auth.db); guest-limits.json next to it",
+    "schema": "executed at start, no migrations",
+    "inGit": false
+  },
+  "doors": [
+    {
+      "path": "/api/session",
+      "method": "GET",
+      "gives": "the current session, or 401"
+    },
+    {
+      "path": "/api/session/verify",
+      "method": "POST",
+      "gives": "verification of a session token for another service"
+    },
+    {
+      "path": "/api/auth/[...nextauth]",
+      "method": "ANY",
+      "gives": "the NextAuth pipeline: providers, callbacks, sign-out"
+    },
+    {
+      "path": "/api/auth/methods",
+      "method": "GET",
+      "gives": "which sign-in methods this installation actually offers"
+    },
+    {
+      "path": "/api/auth/guest",
+      "method": "POST",
+      "gives": "a guest session"
+    },
+    {
+      "path": "/api/auth/architect",
+      "method": "POST",
+      "gives": "a session for the architect layer, by ARCHITECT_TOKEN"
+    },
+    {
+      "path": "/api/admin/users",
+      "method": "GET|POST",
+      "gives": "the user list and user creation, admin only"
+    },
+    {
+      "path": "/api/user-count",
+      "method": "GET",
+      "gives": "how many accounts exist — used to decide first-run"
+    },
+    {
+      "path": "/login",
+      "method": "GET",
+      "gives": "the sign-in page"
+    },
+    {
+      "path": "/register",
+      "method": "GET",
+      "gives": "the registration page"
+    },
+    {
+      "path": "/logout",
+      "method": "GET",
+      "gives": "sign-out"
+    },
+    {
+      "path": "/api/auth/ticket, /api/auth/exchange, /api/auth/sso",
+      "method": "GET|POST",
+      "gives": "single sign-on for an element on its own domain: a one-time code, its exchange for a ticket, the ticket check"
+    },
+    {
+      "path": "/api/auth/guest/leave",
+      "method": "POST",
+      "gives": "end a guest session"
+    },
+    {
+      "path": "/signout, /guest-login",
+      "method": "GET",
+      "gives": "the sign-out confirmation and the guest entry page"
+    },
+    {
+      "path": "/",
+      "method": "GET",
+      "gives": "the signed-in card; without a session cookie 307 to /<default language>"
+    },
+    {
+      "path": "/en, /ru",
+      "method": "GET",
+      "gives": "the public home page of the element"
+    },
+    {
+      "path": "/api/settings/design",
+      "method": "GET|PATCH",
+      "gives": "the own DESIGN-CONFIG by the key X-Settings-Key"
+    }
+  ],
+  "provides": [
+    "session",
+    "roles",
+    "sign-in-ui"
+  ],
+  "origin": {
+    "movedFrom": "ai-workspace/services/auth",
+    "movedAt": "2026-09-20",
+    "step": "257-1",
+    "nativeTemplate": "fractera-native-item-starter v0.1.15",
+    "ported": "2026-10-21",
+    "portStep": "549-5"
+  }
+}

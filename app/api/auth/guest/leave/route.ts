@@ -1,5 +1,6 @@
+// @api end the guest session of this browser and forget its record
 import { NextRequest, NextResponse } from "next/server"
-import { getDb } from "@/lib/db"
+import { getDb } from "@/lib/auth/db"
 import { fromLoopback, revokeUser } from "@/lib/sso"
 
 // ГОСТЬ УХОДИТ И УНОСИТ СВОЮ ЗАПИСЬ (узел, шаг 331-2). Слово владельца: кнопка «удалить мою учётную запись и покинуть сайт».

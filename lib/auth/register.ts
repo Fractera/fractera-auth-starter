@@ -1,7 +1,7 @@
 "use server";
 
 import { hash } from "bcrypt-ts";
-import { getDb } from "@/lib/db";
+import { getDb } from "@/lib/auth/db";
 import { nanoid } from "nanoid";
 import { auth } from "./auth";
 import { ALL_ROLES } from "./roles";

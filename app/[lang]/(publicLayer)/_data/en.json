@@ -1,0 +1,58 @@
+{
+  "title": "Sign-in service",
+  "description": "To build your application, open the Authorization tab in the core and activate your programmer agent: with it, right in the interface, you change how this application is built.",
+  "keywords": "",
+  "blocks": [
+    {
+      "kind": "block-hero-centered",
+      "pill": "Agentic engineering infrastructure",
+      "title": "Sign-in service",
+      "description": "To build your application, open the Authorization tab in the core and activate your programmer agent: with it, right in the interface, you change how this application is built.",
+      "cta": {
+        "label": "Sign in",
+        "href": "/login"
+      },
+      "secondary": {
+        "label": "Create an account",
+        "href": "/register"
+      },
+      "bid": "agupq"
+    },
+    {
+      "kind": "text-h3",
+      "text": "One sign-in",
+      "bid": "a92t0"
+    },
+    {
+      "kind": "text-p",
+      "text": "The only service that grants access on the node",
+      "bid": "aty0f"
+    },
+    {
+      "kind": "text-h3",
+      "text": "Roles",
+      "bid": "a489h"
+    },
+    {
+      "kind": "text-p",
+      "text": "Who reads and changes what is decided here",
+      "bid": "a3tb4"
+    },
+    {
+      "kind": "text-h3",
+      "text": "82 languages",
+      "bid": "adb8w"
+    },
+    {
+      "kind": "text-p",
+      "text": "The sign-in screens speak the visitor's language",
+      "bid": "adbxt"
+    },
+    {
+      "kind": "block-warning-card",
+      "title": "Better at an early stage",
+      "text": "Do this work early in the life of the application: it carries the highest risk. If sign-in breaks, nobody can use the protected routes — architects included. Sign-in can be restored through the development mode.",
+      "bid": "a7r9i"
+    }
+  ]
+}

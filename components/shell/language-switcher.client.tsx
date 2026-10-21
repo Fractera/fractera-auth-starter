@@ -4,6 +4,8 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Languages, Search, X } from "lucide-react";
 import type { ShellLanguage } from "./shell-types";
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 
 // ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКА ОБОЛОЧКИ (285-3): перенесён из сайта без изменения вида; языки, регионы и язык по
 // умолчанию приходят свойствами (данные оболочки), а не из конфигов сайта — так он один у всех служб.
@@ -118,7 +120,7 @@ function LanguageSwitcherInner({ languages, regions, defaultLang }: SwitcherProp
 
   return (
     <div ref={ref} className="relative">
-      <button
+      <Button variant="bare" size="bare"
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border text-foreground hover:text-foreground hover:bg-muted transition-all"
@@ -129,7 +131,7 @@ function LanguageSwitcherInner({ languages, regions, defaultLang }: SwitcherProp
         <span className="font-semibold uppercase tracking-wider text-xs">
           {currentLang}
         </span>
-      </button>
+      </Button>
 
       {open && (
         <div className="absolute bottom-full mb-2 right-0 w-64 rounded-xl border border-border bg-popover shadow-2xl z-50 overflow-hidden ring-1 ring-black/5 animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-1 duration-150">
@@ -137,7 +139,7 @@ function LanguageSwitcherInner({ languages, regions, defaultLang }: SwitcherProp
           {!touch && (
             <div className="relative p-2 border-b border-border">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <input
+              <Input
                 autoFocus
                 type="text"
                 value={filter}
@@ -146,13 +148,13 @@ function LanguageSwitcherInner({ languages, regions, defaultLang }: SwitcherProp
                 className="w-full bg-muted text-foreground text-sm rounded-md pl-8 pr-7 py-1.5 outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-primary"
               />
               {filter && (
-                <button
+                <Button variant="bare" size="bare"
                   type="button"
                   onClick={() => setFilter("")}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
                   <X size={12} />
-                </button>
+                </Button>
               )}
             </div>
           )}
@@ -219,10 +221,10 @@ function LangRow({
   onSelect: (code: string) => void;
 }) {
   return (
-    <button
+    <Button variant="bare" size="bare"
       type="button"
       onClick={() => onSelect(lang.code)}
-      className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors text-left ${
+      className={`justify-start w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors text-left ${
         isActive
           ? "bg-primary/15 text-primary"
           : "text-foreground hover:bg-muted hover:text-foreground"
@@ -233,6 +235,6 @@ function LangRow({
       <span className="ml-auto text-xs text-muted-foreground uppercase">
         {lang.code}
       </span>
-    </button>
+    </Button>
   );
 }

@@ -10,6 +10,7 @@
 // Элемента нет (`DESIGN_SERVICE_URL` пуст) — служба живёт своим `DESIGN-CONFIG`.
 import { readFileSync, writeFileSync, renameSync, mkdirSync, unlinkSync, existsSync } from "fs"
 import { dirname, join } from "path"
+import { linkOn } from "./own-site"
 import { timingSafeEqual } from "crypto"
 
 const BRANCHES = ["colors", "fonts", "type", "shape", "blocks"] as const
@@ -42,6 +43,8 @@ export type DesignFollowResult = { ok: true; changed: boolean } | { ok: false; r
 
 /** Забрать решения владельца об оформлении у элемента «Дизайн» и записать в свой DESIGN-CONFIG. Отказ ничего не стирает. */
 export async function pullDesign(): Promise<DesignFollowResult> {
+  // 324-7: связь с «Дизайном» выключена — оформление остаётся своим.
+  if (!linkOn("design")) return { ok: false, reason: "design-disconnected" }
   let patch: Record<string, unknown>
   try {
     const got = (await callTool("get_project_settings", { kind: "design" })) as { patches?: { design?: unknown } }

@@ -1,6 +1,7 @@
+// @api change or delete one user account for the admin
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
-import { getDb } from "@/lib/db/index";
+import { getDb } from "@/lib/auth/db";
 
 export const PATCH = auth(async function PATCH(req, context) {
   const session = req.auth;

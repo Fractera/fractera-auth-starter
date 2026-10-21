@@ -1,12 +1,22 @@
+// @api read and change this site's design settings for the node core
 import { timingSafeEqual } from "node:crypto"
 import { NextRequest, NextResponse } from "next/server"
-import { readRawDesign, writeDesignPatch } from "@/lib/settings/design-store"
 
-// ДВЕРЬ НАСТРОЕК СЛУЖБЫ ВХОДА — ОФОРМЛЕНИЕ (узел Fractera, шаг 280-10).
+import { readRawDesignConfig, writeDesignPatch } from "@/lib/architect/design-config-writer"
+
+// ДВЕРЬ НАСТРОЕК САЙТА — ОФОРМЛЕНИЕ (280-6).
 //
-// Тот же договор, что у сайта-стартера: ядро узла приходит без сессии, с ключом `SETTINGS_SECRET`
-// (установщик генерирует его один раз и кладёт в оба конца). Ключа в окружении нет — дверь закрыта для
-// всех. Запись не меняет страницы сама: их применяет развёртывание.
+// 🔒 НАСТРОЙКИ ПРИНАДЛЕЖАТ САЙТУ, ЯДРО ДОТЯГИВАЕТСЯ (закон направления потока, слово владельца
+// 2026-09-23): «сайт содержит свои собственные конфиги которые могут из ядра быть прочитаны
+// обновлены и записаны обратно … сайт будет жив даже если ядра не будет существовать».
+// Файл — `DESIGN-CONFIG/design-config.json` этого сайта; ядро его не хранит и не копирует.
+//
+// 🔒 КЛЮЧ, А НЕ РОЛЬ. Ядро приходит без сессии посетителя. Ключ `SETTINGS_SECRET` установщик узла
+// генерирует один раз и кладёт в оба конца. Ключа в окружении нет — дверь закрыта для всех.
+//
+// 🛑 ЗАПИСЬ НЕ МЕНЯЕТ СТРАНИЦЫ САМА. Оформление запекается в статические страницы на сборке;
+// пересобрать сайт — дело того, кто правил (ядро), и ответ говорит об этом словами.
+export const dynamic = "force-dynamic"
 
 function keyOk(req: NextRequest): boolean {
   const expected = process.env.SETTINGS_SECRET ?? ""
@@ -19,7 +29,7 @@ const denied = () => NextResponse.json({ ok: false, reason: "bad-key" }, { statu
 
 export async function GET(req: NextRequest) {
   if (!keyOk(req)) return denied()
-  return NextResponse.json({ ok: true, config: readRawDesign() }, { headers: { "Cache-Control": "no-store" } })
+  return NextResponse.json({ ok: true, config: readRawDesignConfig() }, { headers: { "Cache-Control": "no-store" } })
 }
 
 export async function PATCH(req: NextRequest) {

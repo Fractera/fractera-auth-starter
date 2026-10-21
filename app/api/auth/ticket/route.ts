@@ -1,3 +1,4 @@
+// @api check a single sign-on ticket and return who it belongs to
 import { NextRequest, NextResponse } from "next/server"
 import { fromLoopback, revokeUser, whoByTicket } from "@/lib/sso"
 import { userAlive } from "@/lib/guest-guard"

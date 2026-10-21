@@ -1,3 +1,4 @@
+// @api tell which sign-in methods this installation actually offers
 import { NextResponse, connection } from "next/server";
 
 // Public flag endpoint — tells the login page which extra sign-in methods are

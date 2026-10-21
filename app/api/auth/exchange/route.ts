@@ -1,3 +1,4 @@
+// @api exchange a one-time sign-in code for a single sign-on ticket
 import { NextRequest, NextResponse } from "next/server"
 import { exchangeCode, fromLoopback } from "@/lib/sso"
 

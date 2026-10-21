@@ -1,3 +1,4 @@
+// @api issue a one-time sign-in code for an element on its domain
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth/auth"
 import { allowedReturn, issueCode } from "@/lib/sso"

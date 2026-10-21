@@ -1,3 +1,4 @@
+// @api verify a session token presented by another service of the node
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
 import { shouldBypassAuth } from "@/lib/auth-bypass";

@@ -1,3 +1,4 @@
+// @api give a session for the architect layer by the architect token
 import { NextResponse, connection } from "next/server";
 import { signIn } from "@/lib/auth/auth";
 

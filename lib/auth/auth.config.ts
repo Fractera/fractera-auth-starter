@@ -4,7 +4,7 @@ import Google from "next-auth/providers/google";
 import Resend from "next-auth/providers/resend";
 import { Resend as ResendClient } from "resend";
 import { compare } from "bcrypt-ts";
-import { getDb } from "@/lib/db";
+import { getDb } from "@/lib/auth/db";
 import { revokeUser } from "@/lib/sso";
 
 function buildProviders(): NextAuthConfig["providers"] {

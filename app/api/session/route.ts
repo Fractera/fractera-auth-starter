@@ -1,3 +1,4 @@
+// @api return the current session of the visitor or answer 401
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
 import { shouldBypassAuth } from "@/lib/auth-bypass";

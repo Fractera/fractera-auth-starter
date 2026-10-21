@@ -1,0 +1,22 @@
+{
+  "id": "auth",
+  "name": "Fractera Auth",
+  "shortDescription": "The single service that hands out entry: sessions, roles, sign-in forms in 82 languages.",
+  "longDescription": "The node's sign-in service: accounts, sessions and roles in its own SQLite database, the sign-in, registration and guest forms in 82 languages, single sign-on for elements on their own domains (a one-time code exchanged for a ticket) and the user list for the architect. Every element of the node asks it who came; no other element signs people in.",
+  "accepts": "A browser session cookie or a sign-in ticket; e-mail and password, Google, a guest request, the architect token.",
+  "returns": "The session (user, e-mail, roles) or 401; sign-in forms; tickets and one-time codes for single sign-on.",
+  "designSkill": "impeccable",
+  "isFracteraArchitecture": true,
+  "framework": "next",
+  "elementType": "native",
+  "visibility": "node",
+  "calls": [
+    "config",
+    "design"
+  ],
+  "messengers": {
+    "h2a": true,
+    "h2h": false,
+    "a2a": false
+  }
+}

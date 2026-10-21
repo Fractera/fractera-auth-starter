@@ -73,7 +73,7 @@ export function FooterSocialDropdown({ socials, label }: { socials: { href: stri
 
   return (
     <div ref={ref} className="relative">
-      <button
+      <Button variant="bare" size="bare"
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label={label}
@@ -82,7 +82,7 @@ export function FooterSocialDropdown({ socials, label }: { socials: { href: stri
         className="size-9 inline-flex items-center justify-center rounded-md border border-border text-foreground hover:text-foreground hover:bg-muted transition-colors"
       >
         {open ? <X size={16} /> : <Menu size={16} />}
-      </button>
+      </Button>
 
       {open && (
         <div className="absolute bottom-full mb-2 right-0 min-w-[180px] rounded-xl border border-border bg-popover shadow-2xl z-50 overflow-hidden ring-1 ring-black/5 animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-1 duration-150 py-1">

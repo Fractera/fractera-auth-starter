@@ -1,5 +1,6 @@
+// @api count the accounts to decide whether this is the first run
 import { NextResponse, connection } from "next/server";
-import { getDb } from "@/lib/db";
+import { getDb } from "@/lib/auth/db";
 
 export async function GET() {
   // 295: число пользователей — на каждый запрос, не со сборки (Cache Components иначе предрендерит обработчик).
