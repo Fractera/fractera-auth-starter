@@ -149,3 +149,19 @@ full address so it is clickable; it opens the page. The place lights up only whe
 delete any file or folder. Guards refuse a build that leaves it; a change of the tree itself is the person's decision.
 Something of the starting tree is gone (`npm run check:tree` lists a missing path) → the skill's section «Restore the starting
 architecture»: find the removing commit, ask the person, restore from git history or the template tag (node step 462).
+
+## Users of the node — tables, triggers, the door (node step 559)
+
+The people of the node live in this element's database (`DATABASE_URL`, `<node>/data/services/auth/auth.db`). Step 559 added what the
+core tab «Users» shows; the details and the rules are in `app/api/node-users/README.md`.
+- **Schema** — `lib/auth/db/users-schema.ts`, run on every start by `runMigrations`: `first_name`, `last_name`, `wallet`, `deleted_at`
+  on `users`; `organizations`, `user_organizations`, `user_role_history`, `user_consents` (history only — the current value is the
+  last row), `user_auth_methods`, `user_messenger_contacts`, `user_log`, `audit_actor`. Existing users get their first rows once.
+- **History is written by database triggers**, not by code — every writer of `users` is recorded. Do not write history rows by hand;
+  write the record and let the trigger log it. Who acts: `withActor()` (`lib/auth/users-journal.ts`) inside one transaction.
+- **A new column** follows the law «a column is not a table»: the `ALTER` ladder, the reader's column list, and the trigger's field list.
+- **Deleting a person is anonymization only** (`runBatch(…, "anonymize")` in `lib/auth/node-users.ts`, also behind the old
+  `DELETE /api/admin/users/[id]`). Guests are the one exception: their eviction stays a real delete.
+- **The sign-in canon** (forms, adapter, registration) is not improved in passing. Step 559-1 changed exactly three things, each
+  measured: a password-less record signs in without a password only as a guest; a blocked record (`is_active = 0`) cannot sign in and
+  drops out of `/api/session`, the ticket door and `/api/session/verify`; those doors return the roles from the database.

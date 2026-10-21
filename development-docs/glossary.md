@@ -49,3 +49,6 @@ The person speaks by voice and in their own language: their word goes in the sec
 | **backlog** | «бэклог», «долг» | `backlog.md` — built but not explained, built halfway, or promised. |
 | **cancelled** | «отменённое», «откати» | `cancelled.md` — what was dropped or rolled back, by whose word and what replaced it. |
 | **report** | «отчёт», «разбор» | `reports/` — `errors-…` explains one failure, `feature-…` describes a finished capability. |
+| **users of the node** | «пользователи», «вкладка Пользователи» | Every account in this element's base; the core tab «Users» of the auth element shows and changes them through `/api/node-users` (step 559). |
+| **organization** | «организация», «компания» | A group of people (a company) a user belongs to; not an application of an app factory. |
+| **anonymization** | «удаление», «обезличивание» | The only way to delete a person: name, avatar, sign-in methods, e-mail and wallet erased; id, pseudonym and log kept. |
