@@ -5,13 +5,14 @@ import { getDb } from "@/lib/auth/db"
 import { fromOutside } from "@/lib/a2a/boundary"
 import { revokeUser } from "@/lib/sso"
 import { dataUrl } from "@/lib/microservices/urls"
-import { createOrg, historyOf, HISTORY_KINDS, listOrgs, listUsers, runBatch, type Action, type HistoryKind } from "@/lib/auth/node-users"
+import { appOrg, createOrg, historyOf, HISTORY_KINDS, listOrgs, listUsers, runBatch, type Action, type HistoryKind } from "@/lib/auth/node-users"
 
 // ДВЕРЬ ПОЛЬЗОВАТЕЛЕЙ УЗЛА ДЛЯ ЯДРА (узел, шаг 559-3). Работа — `lib/auth/node-users.ts`.
 //   GET  /api/node-users?q=&org=&role=&sort=created_desc|created_asc&page=&perPage=10|25|50|100
 //   GET  /api/node-users/<id>/history/<roles|methods|marketing|tracking|log|messenger>?page=&perPage=
 //   GET  /api/node-users/organizations          POST /api/node-users/organizations { name }
 //   POST /api/node-users/batch { action, ids[], value? }
+//   POST /api/node-users/apps { element } — организация-приложение элемента завода (554-1): есть — та же, нет — новая
 // 🔒 ЗАМОК — КЛЮЧ АРХИТЕКТОРА (`ARCHITECT_TOKEN`, заголовок `x-architect-token`) и только петля машины. Ключ общий у ядра и этой службы
 // и больше ни у кого; `SETTINGS_SECRET` для этой двери не годится — он есть у каждого элемента узла, и любой из них читал бы людей.
 // Через туннель дверь отвечает 404 — её как будто нет. Кто действует — заголовки ядра `x-node-actor`, `x-node-actor-roles`: ядро
@@ -65,6 +66,10 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   const db = getDb()
   if (path.length === 1 && path[0] === "organizations") {
     const r = createOrg(db, body.name)
+    return "error" in r ? json({ ok: false, error: r.error }, 400) : json({ ok: true, organization: r })
+  }
+  if (path.length === 1 && path[0] === "apps") {
+    const r = appOrg(db, body.element)
     return "error" in r ? json({ ok: false, error: r.error }, 400) : json({ ok: true, organization: r })
   }
   if (path.length === 1 && path[0] === "batch") {

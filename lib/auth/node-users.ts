@@ -83,13 +83,13 @@ export function listUsers(dbIn: Database.Database, q: { q?: string | null; org?:
   const rows = db.prepare(`SELECT ${USER_COLS} FROM users u ${w} ORDER BY u.created_at ${dir}, u.rowid ${dir} LIMIT ? OFFSET ?`).all(...args, perPage, offset) as UserRow[];
 
   const ids = rows.map((r) => r.id);
-  const orgs = new Map<string, { id: string; name: string }[]>();
+  const orgs = new Map<string, { id: string; name: string; element: string | null }[]>();
   const methods = new Map<string, string[]>();
   const consents = new Map<string, Record<string, { granted: boolean; at: string }>>();
   const messenger = new Map<string, number>();
   if (ids.length) {
-    for (const o of db.prepare(`SELECT uo.user_id, o.id, o.name FROM user_organizations uo JOIN organizations o ON o.id = uo.org_id WHERE uo.user_id IN (${inList(ids.length)}) ORDER BY o.name COLLATE NOCASE`).all(...ids) as { user_id: string; id: string; name: string }[]) {
-      orgs.set(o.user_id, [...(orgs.get(o.user_id) ?? []), { id: o.id, name: o.name }]);
+    for (const o of db.prepare(`SELECT uo.user_id, o.id, o.name, o.element FROM user_organizations uo JOIN organizations o ON o.id = uo.org_id WHERE uo.user_id IN (${inList(ids.length)}) ORDER BY o.name COLLATE NOCASE`).all(...ids) as { user_id: string; id: string; name: string; element: string | null }[]) {
+      orgs.set(o.user_id, [...(orgs.get(o.user_id) ?? []), { id: o.id, name: o.name, element: o.element }]);
     }
     for (const m of db.prepare(`SELECT user_id, method FROM user_auth_methods WHERE user_id IN (${inList(ids.length)}) ORDER BY first_at`).all(...ids) as { user_id: string; method: string }[]) {
       methods.set(m.user_id, [...(methods.get(m.user_id) ?? []), m.method]);
@@ -136,7 +136,20 @@ export function historyOf(db: Database.Database, id: string, kind: HistoryKind, 
 
 /** Организации узла с числом участников. */
 export function listOrgs(db: Database.Database) {
-  return db.prepare("SELECT o.id, o.name, (SELECT COUNT(*) FROM user_organizations uo WHERE uo.org_id = o.id) AS members FROM organizations o ORDER BY o.name COLLATE NOCASE").all() as { id: string; name: string; members: number }[];
+  return db.prepare("SELECT o.id, o.name, o.element, (SELECT COUNT(*) FROM user_organizations uo WHERE uo.org_id = o.id) AS members FROM organizations o ORDER BY o.name COLLATE NOCASE").all() as { id: string; name: string; element: string | null; members: number }[];
+}
+
+/** Организация-приложение элемента завода (554-1): есть — вернуть, нет — создать. Имя строки — id элемента; человеку ядро
+ *  показывает `short_name` из настроек элемента. Повторный вызов дубля не даёт (уникальный индекс `organizations_element`). */
+export function appOrg(db: Database.Database, rawElement: unknown): { id: string; name: string; element: string; created: boolean } | { error: string } {
+  const element = typeof rawElement === "string" ? rawElement.trim() : "";
+  if (!/^[a-z][a-z0-9-]{1,39}$/.test(element)) return { error: "bad-element" };
+  const found = db.prepare("SELECT id, name, element FROM organizations WHERE element = ?").get(element) as { id: string; name: string; element: string } | undefined;
+  if (found) return { ...found, created: false };
+  if (db.prepare("SELECT 1 FROM organizations WHERE name = ? COLLATE NOCASE").get(element)) return { error: "name-taken" };
+  const id = nanoid(10);
+  db.prepare("INSERT INTO organizations (id, name, element) VALUES (?, ?, ?)").run(id, element, element);
+  return { id, name: element, element, created: true };
 }
 
 /** Создать организацию; такое имя уже есть (без учёта регистра) — вернуть её. */

@@ -192,4 +192,11 @@ export function migrateUsersJournal(db: Database.Database) {
     INSERT OR IGNORE INTO user_auth_methods (user_id, method, first_at)
       SELECT a.user_id, ${METHOD_SQL("a.provider")}, u.created_at FROM accounts a JOIN users u ON u.id = a.user_id;
   `);
+
+  // ПРИЛОЖЕНИЯ ЗАВОДА (узел, шаг 554-1). Организация с `element` — приложение: её рождает кастомный элемент на узле-заводе
+  // (`POST /api/node-users/apps`). Имя такой строки — id элемента (имена организаций уникальны, а у всех новорождённых оно
+  // по умолчанию «Fractera»); человеку ядро показывает `short_name` из настроек элемента в момент показа.
+  const orgCols = (db.prepare("PRAGMA table_info(organizations)").all() as { name: string }[]).map((c) => c.name);
+  if (!orgCols.includes("element")) db.exec("ALTER TABLE organizations ADD COLUMN element TEXT");
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS organizations_element ON organizations(element) WHERE element IS NOT NULL");
 }
