@@ -1,5 +1,6 @@
 import { getDb } from "./index";
 import { migrateUsersJournal } from "./users-schema";
+import { migrateApps } from "./apps-schema";
 
 export function runMigrations() {
   const db = getDb();
@@ -64,6 +65,9 @@ export function runMigrations() {
     }
   }
 
+  // 554-2: учётная запись принадлежит приложению (`apps-schema.ts`) — ДО 559-2: пересоздание таблиц снимает их триггеры,
+  // и `migrateUsersJournal` возвращает их.
+  migrateApps(db);
   // 559-2: свойства и истории пользователей узла — таблицы, триггеры, засев существующих (`users-schema.ts`).
   migrateUsersJournal(db);
 }
