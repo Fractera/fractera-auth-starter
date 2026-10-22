@@ -67,3 +67,20 @@ export function migrateApps(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS users_app ON users(app);
   `);
 }
+
+// 554-5: ЧЕЛОВЕК ПРИЛОЖЕНИЯ — УЧАСТНИК ЕГО ОРГАНИЗАЦИИ. Владелец 2026-10-22: «если один пользователь участвует в нескольких
+// организациях» — приложение видно на вкладке «Пользователи» плашкой организации и находится её отбором. Пишет триггер базы
+// (как истории 559): регистрация, Google, повышение гостя — любой путь. Идёт ПОСЛЕ `migrateUsersJournal`: та создаёт
+// `user_organizations`. Засев — тем, кто уже записан в приложение.
+export function migrateAppMembership(db: Database.Database) {
+  db.exec(`
+    CREATE TRIGGER IF NOT EXISTS users_554_app_member AFTER INSERT ON users WHEN NEW.app <> 'node' BEGIN
+      INSERT OR IGNORE INTO user_organizations (user_id, org_id) SELECT NEW.id, o.id FROM organizations o WHERE o.element = NEW.app;
+    END;
+    CREATE TRIGGER IF NOT EXISTS users_554_app_moved AFTER UPDATE OF app ON users WHEN NEW.app <> 'node' AND OLD.app IS NOT NEW.app BEGIN
+      INSERT OR IGNORE INTO user_organizations (user_id, org_id) SELECT NEW.id, o.id FROM organizations o WHERE o.element = NEW.app;
+    END;
+    INSERT OR IGNORE INTO user_organizations (user_id, org_id)
+      SELECT u.id, o.id FROM users u JOIN organizations o ON o.element = u.app WHERE u.app <> 'node';
+  `);
+}

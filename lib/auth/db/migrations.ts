@@ -1,6 +1,6 @@
 import { getDb } from "./index";
 import { migrateUsersJournal } from "./users-schema";
-import { migrateApps } from "./apps-schema";
+import { migrateApps, migrateAppMembership } from "./apps-schema";
 
 export function runMigrations() {
   const db = getDb();
@@ -70,4 +70,6 @@ export function runMigrations() {
   migrateApps(db);
   // 559-2: свойства и истории пользователей узла — таблицы, триггеры, засев существующих (`users-schema.ts`).
   migrateUsersJournal(db);
+  // 554-5: человек приложения — участник его организации (после 559-2: таблица участников создаётся там).
+  migrateAppMembership(db);
 }

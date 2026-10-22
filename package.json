@@ -1,6 +1,6 @@
 {
   "name": "fractera-auth",
-  "version": "2.2.2",
+  "version": "2.3.0",
   "private": true,
   "scripts": {
     "check:routes": "node scripts/check-routes.mjs",

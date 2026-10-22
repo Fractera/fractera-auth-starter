@@ -92,6 +92,24 @@ in this service). A card for them in the core's «Authorization» section — la
 `/api/auth/guest/leave` (loopback only) deletes a guest on the element's request — «Delete my account and leave».
 Data an element kept for an evicted or deleted guest is not cleaned here: an element treats an unknown user id as gone.
 
+## Applications of an app factory: one sign-in, own people per application (node step 554)
+
+On a node of type `factory` (registry `nodeType`) every custom element born there is an **application** with its own people. The
+owner's words (2026-10-21/22): «таблица пользователей должна быть для каждого приложения своя»; the choice «своя запись в каждом
+приложении»; the sign-in stays one — this element. On a `project` node nothing below happens: there is one application, `node`.
+
+| What | How |
+|---|---|
+| the application | an organization with `element` = the element id (`organizations.element`, unique). The factory birth creates it: `POST /api/node-users/apps { element }` (architect key, loopback), called by the core's `scripts/item-birth.mjs`. Its name in this database is the element id; the core shows the element's `short_name` (APP-CONFIG) at read time |
+| an account | `users.app` — the element id, or `node` (the core, built-in elements, a single project, everybody before step 554). The same email in two applications is two accounts; inside one it is unique (`users_app_email`). A Google account — the same (`accounts.app`, `accounts_app_provider`). Membership in the application's organization is written by a database trigger (`users_554_app_member`) |
+| which application a sign-in is in | the site in the final return address (`lib/auth/apps.ts`, `lib/auth/app-hosts.ts`): password — `callbackUrl` the form sends; registration — `referer` of the page; Google and email link — `callbackUrl` of the request or the `authjs.callback-url` cookie (`withRequestApp` in `/api/auth/[...nextauth]`). An element without an application organization — `node` |
+| the return | `proxy.ts`: on the factory `/login` and `/register` with a return to an element site go through `/api/auth/sso` — the person comes back to the same page of that site with a **ticket** on it, never to the project's home page |
+| who is admitted where | `/api/session` and `verify` (the zone cookie every element asks) admit only `node` accounts; an application person lives by the ticket of their site. `/api/auth/sso` gives a code to a site only for its own people, a `node` architect (over all applications) or a `node` guest |
+| the first architect | only the first `node` account; the first person of an application is a plain `user` |
+
+Not built: an owner of an application managing their own people, moving people between applications, guests of an application (a guest
+stays `node`). Proof — `/code` `completed-steps/554-*.md`.
+
 ## Where it came from
 
 Moved out of `ai-workspace/services/auth` on 2026-09-20 (step 257-1). Ported onto the native element template

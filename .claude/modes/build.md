@@ -165,3 +165,14 @@ core tab «Users» shows; the details and the rules are in `app/api/node-users/R
 - **The sign-in canon** (forms, adapter, registration) is not improved in passing. Step 559-1 changed exactly three things, each
   measured: a password-less record signs in without a password only as a guest; a blocked record (`is_active = 0`) cannot sign in and
   drops out of `/api/session`, the ticket door and `/api/session/verify`; those doors return the roles from the database.
+
+## Applications of an app factory (node step 554)
+
+On a `factory` node every custom element born there is an application with its own people (README, «Applications of an app factory»).
+- **An account belongs to one application** — `users.app` (element id or `node`); email and a Google account are unique inside it.
+  Any new lookup by email adds `AND app = ?` — a lookup by email alone finds a stranger from another application.
+- **The application of a request** comes from the final return address only (`lib/auth/apps.ts`); never from a form field you add.
+  The adapter reads it from `withRequestApp` (`/api/auth/[...nextauth]`). 🛑 Do not make NextAuth lazy (`NextAuth(req => …)`): in
+  beta.31 `auth(handler)` then returns a Promise and every door wrapped in `auth(...)` stops being a handler.
+- **Admission:** `/api/session` and `verify` admit only `node` accounts; an application person lives by the ticket on its site;
+  `admittedTo` decides who gets a code in `/api/auth/sso`. The tables were rebuilt once by `lib/auth/db/apps-schema.ts`.
