@@ -55,7 +55,7 @@ function rowToUser(row: UserRow): AdapterUser & { roles: string[]; app: string }
 // 🔒 554-3: АДАПТЕР ЖИВЁТ В ОДНОМ ПРИЛОЖЕНИИ (`app` — из адреса возврата запроса, `lib/auth/apps.ts`). Человек ищется и создаётся
 // только в нём: тот же email или тот же аккаунт Google в другом приложении — другой человек. По id (`getUser`) — как прежде:
 // id уникален на весь узел.
-export function SqliteAdapter(db: Database.Database, app = "node"): Adapter {
+export function SqliteAdapter(db: Database.Database, appOf: () => string = () => "node"): Adapter {
   return {
     async createUser(user) {
       const id = user.id || nanoid();
@@ -63,6 +63,7 @@ export function SqliteAdapter(db: Database.Database, app = "node"): Adapter {
       // lib/auth/register.ts. Every later sign-up, via ANY provider, is a
       // normal user.
       // 554-3: первым — архитектором — становится только запись узла; первый человек приложения завода — обычный пользователь.
+      const app = appOf();
       const isFirst = app === "node" && !db.prepare("SELECT id FROM users WHERE app = 'node' LIMIT 1").get();
       const roles = isFirst ? ["architect"] : ["user"];
       // Default provider "email": the magic-link path never calls linkAccount,
@@ -93,7 +94,7 @@ export function SqliteAdapter(db: Database.Database, app = "node"): Adapter {
     async getUserByEmail(email) {
       const row = db
         .prepare(`SELECT ${USER_COLS} FROM users WHERE email = ? AND app = ?`)
-        .get(email.trim().toLowerCase(), app) as UserRow | undefined;
+        .get(email.trim().toLowerCase(), appOf()) as UserRow | undefined;
       return row ? rowToUser(row) : null;
     },
 
@@ -104,7 +105,7 @@ export function SqliteAdapter(db: Database.Database, app = "node"): Adapter {
            FROM accounts a JOIN users u ON u.id = a.user_id
            WHERE a.provider = ? AND a.provider_account_id = ? AND a.app = ?`
         )
-        .get(provider, providerAccountId, app) as UserRow | undefined;
+        .get(provider, providerAccountId, appOf()) as UserRow | undefined;
       return row ? rowToUser(row) : null;
     },
 
@@ -154,7 +155,7 @@ export function SqliteAdapter(db: Database.Database, app = "node"): Adapter {
     },
 
     async unlinkAccount({ provider, providerAccountId }) {
-      db.prepare("DELETE FROM accounts WHERE provider = ? AND provider_account_id = ? AND app = ?").run(provider, providerAccountId, app);
+      db.prepare("DELETE FROM accounts WHERE provider = ? AND provider_account_id = ? AND app = ?").run(provider, providerAccountId, appOf());
     },
 
     async createVerificationToken(token) {

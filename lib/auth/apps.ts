@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks"
 import { getDb } from "@/lib/auth/db"
 import { elementOfHost, finalReturn } from "@/lib/auth/app-hosts"
 
@@ -19,6 +20,27 @@ export function appOfReturn(raw: string | null | undefined): string {
   if (!element) return NODE_APP
   const org = getDb().prepare("SELECT 1 FROM organizations WHERE element = ?").get(element)
   return org ? element : NODE_APP
+}
+
+/** Приложение записи по базе (а не по токену: токены до шага поля `app` не несут). Записи нет — `node`. */
+export function appOfUser(id: string): string {
+  const row = getDb().prepare("SELECT app FROM users WHERE id = ?").get(id) as { app?: string } | undefined
+  return row?.app ?? NODE_APP
+}
+
+/** 554-4: признаётся ли запись на сайте приложения `siteApp`: своя — да; запись узла — только архитектор (он над всеми
+ *  приложениями) и гость (гостей заводит узел, 331); запись другого приложения — нет. */
+export function admittedTo(siteApp: string, userId: string, roles: string[]): boolean {
+  const own = appOfUser(userId)
+  if (own === siteApp) return true
+  return own === NODE_APP && (roles.includes("architect") || roles.includes("guest"))
+}
+
+// Приложение текущего запроса к NextAuth: дверь `/api/auth/[...nextauth]` кладёт его сюда, адаптер читает (`currentApp`).
+const requestApp = new AsyncLocalStorage<string>()
+export const currentApp = (): string => requestApp.getStore() ?? NODE_APP
+export function withRequestApp<T>(req: Request, run: () => T): T {
+  return requestApp.run(appOfRequest(req), run)
 }
 
 const CALLBACK_COOKIES = ["__Secure-authjs.callback-url", "authjs.callback-url"]

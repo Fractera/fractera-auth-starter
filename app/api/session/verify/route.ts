@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
 import { shouldBypassAuth } from "@/lib/auth-bypass";
 import { userAlive } from "@/lib/guest-guard";
+import { appOfUser, NODE_APP } from "@/lib/auth/apps";
 
 // Lightweight session-validity endpoint, designed for nginx `auth_request`.
 //
@@ -31,7 +32,8 @@ export const GET = auth(function GET(req) {
     return new NextResponse(null, { status: 204 });
   }
   // 559-1: этой дверью узнают посетителя элементы из своего репозитория (FRACTERA.md) — заблокированный и удалённый здесь тоже 401.
-  if (!req.auth?.user || !userAlive(req.auth.user.id)) {
+  // 554-4: человек приложения завода по общей куке не признаётся (как `/api/session`).
+  if (!req.auth?.user || !userAlive(req.auth.user.id) || appOfUser(req.auth.user.id) !== NODE_APP) {
     return new NextResponse(null, { status: 401 });
   }
   return new NextResponse(null, { status: 204 });

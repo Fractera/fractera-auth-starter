@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
 import { shouldBypassAuth } from "@/lib/auth-bypass";
 import { liveUser } from "@/lib/guest-guard";
+import { appOfUser, NODE_APP } from "@/lib/auth/apps";
 
 const ALLOWED = (process.env.ALLOWED_ORIGINS ?? "")
   .split(",")
@@ -49,7 +50,10 @@ export const GET = auth(function GET(req) {
 
   // 331-5: запись вытеснена (потолок гостей) или удалена — кука есть, человека нет. 559-1: заблокирована — так же.
   const live = session?.user ? liveUser(session.user.id) : null;
-  if (!session?.user || !live) {
+  // 🔒 554-4: ЧЕЛОВЕК ПРИЛОЖЕНИЯ ЗАВОДА ПО ОБЩЕЙ КУКЕ ЗОНЫ НЕ ПРИЗНАЁТСЯ. Эту дверь спрашивают ядро и все элементы зоны, и кука
+  // доходит до каждого из них; человек приложения живёт билетом на сайте своего приложения (`/api/auth/sso` → `/api/auth/ticket`).
+  // Записи узла — как прежде.
+  if (!session?.user || !live || appOfUser(session.user.id) !== NODE_APP) {
     return NextResponse.json({ error: "Unauthorized" }, {
       status: 401,
       headers: corsHeaders(origin),

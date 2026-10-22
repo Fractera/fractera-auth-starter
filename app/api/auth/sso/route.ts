@@ -2,7 +2,8 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth/auth"
 import { allowedReturn, issueCode } from "@/lib/sso"
-import { userAlive } from "@/lib/guest-guard"
+import { liveUser } from "@/lib/guest-guard"
+import { admittedTo, appOfReturn, appOfUser } from "@/lib/auth/apps"
 
 // ВЫДАЧА КОДА ДОМЕНУ ЭЛЕМЕНТА (узел, шаг 328-2). Кнопка «Войти» на собственном домене элемента ведёт сюда с адресом возврата
 // (`return` — дверь элемента `/api/auth/callback`). Не вошёл — сначала страница входа этого центра, и сюда же обратно (тот же
@@ -15,7 +16,10 @@ export const GET = auth(function GET(req) {
   if (!target) return NextResponse.json({ error: "return-not-allowed" }, { status: 400 })
   const base = process.env.NEXTAUTH_URL ?? req.url
   // 331-5: запись вытеснена или удалена — сессия «призрака» не считается входом.
-  const user = req.auth?.user && userAlive(req.auth.user.id) ? req.auth.user : undefined
+  // 554-4: на сайт приложения завода код получает только его человек (или архитектор и гость узла); вошедший в другое
+  // приложение считается не вошедшим — форма входа этого приложения (`lib/auth/apps.ts`, `admittedTo`).
+  const live = req.auth?.user ? liveUser(req.auth.user.id) : null
+  const user = req.auth?.user && live && admittedTo(appOfReturn(ret), req.auth.user.id, live.roles) ? req.auth.user : undefined
   if (!user) {
     // 🔒 331: ГОСТЕВАЯ ВЕТКА ЭЛЕМЕНТА (`guest=1`). Не форма входа, а гость: `/api/auth/guest` создаёт пользователя с ролью
     // `guest` и возвращает сюда же с меткой `tried=1`, дальше — тот же код. Вернулся с меткой и без сессии (кука центра не
@@ -31,7 +35,7 @@ export const GET = auth(function GET(req) {
     return NextResponse.redirect(login, 302)
   }
   const code = issueCode(
-    { userId: String(user.id), email: user.email ?? null, roles: (user as { roles?: string[] }).roles ?? ["user"] },
+    { userId: String(user.id), email: user.email ?? null, roles: (user as { roles?: string[] }).roles ?? ["user"], app: appOfUser(String(user.id)) },
     target,
   )
   target.searchParams.set("code", code)

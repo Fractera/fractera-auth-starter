@@ -3,7 +3,7 @@ import { decode as defaultDecode } from "next-auth/jwt";
 import { authConfig } from "./auth.config";
 import { SqliteAdapter } from "./sqlite-adapter";
 import { getDb } from "@/lib/auth/db";
-import { appOfRequest } from "@/lib/auth/apps";
+import { currentApp } from "@/lib/auth/apps";
 
 // 🔒 КУКА ОТ ПРОШЛОГО СЕРВЕРА НЕ ИМЕЕТ ПРАВА ЗАПИРАТЬ ВЛАДЕЛЬЦА (2026-08-20).
 //
@@ -34,18 +34,18 @@ async function decodeOrNoSession(params: Parameters<typeof defaultDecode>[0]) {
   }
 }
 
-// 🔒 554-3: ЛЕНИВАЯ ИНИЦИАЛИЗАЦИЯ — АДАПТЕР ЗНАЕТ ПРИЛОЖЕНИЕ ЗАПРОСА. Поток Google и письма ищет и создаёт человека в приложении,
-// чей сайт стоит в адресе возврата (`lib/auth/apps.ts`); без запроса (`auth()` в серверном коде, `signIn` гостя) — `node`, как
-// прежде. Всё остальное в конфигурации — то же самое.
-const nextAuth = NextAuth((req) => ({
+const nextAuth = NextAuth({
   ...authConfig,
   // Adapter persists OAuth users/accounts + magic-link verification tokens in
   // the auth service's SQLite DB. Session stays JWT — Credentials sign-ins
   // (password / admin-token / guest) continue to work exactly as before.
-  adapter: SqliteAdapter(getDb(), appOfRequest(req)),
+  // 554-3: адаптер ищет и создаёт человека в приложении запроса — его кладёт дверь `/api/auth/[...nextauth]` (`withRequestApp`);
+  // вне неё — `node`, как прежде. ✗ Ленивая инициализация `NextAuth(req => …)` не годится: с ней `auth(handler)` возвращает
+  // Promise, и все двери на `auth(...)` (`/api/session`, `verify`, `sso`) перестают быть обработчиками (замер прибором 554-4).
+  adapter: SqliteAdapter(getDb(), currentApp),
   session: { strategy: "jwt" },
   jwt: { decode: decodeOrNoSession },
-}));
+});
 
 export const { handlers, auth, signIn, signOut } = nextAuth;
 export const { GET, POST } = nextAuth.handlers;
