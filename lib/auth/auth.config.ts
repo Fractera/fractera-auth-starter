@@ -50,7 +50,7 @@ function buildProviders(): NextAuthConfig["providers"] {
         // которого адрес сайта (`lib/auth/apps.ts`). Своей записи в приложении нет — подходят ещё две записи узла: гость (его
         // заводит `/api/auth/guest`, он живёт в `node`) и архитектор узла (он признаётся во всех приложениях). Своя запись всегда
         // первая.
-        const app = appOfReturn(credentials?.callbackUrl as string | undefined);
+        const app = appOfReturn((credentials as Record<string, unknown> | undefined)?.callbackUrl as string | undefined);
         const db = getDb();
         const user = db
           .prepare(`SELECT id, email, nickname, password, roles, provider, is_active, app FROM users WHERE email = ?

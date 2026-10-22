@@ -23,14 +23,15 @@ export function appOfReturn(raw: string | null | undefined): string {
 }
 
 /** Приложение записи по базе (а не по токену: токены до шага поля `app` не несут). Записи нет — `node`. */
-export function appOfUser(id: string): string {
+export function appOfUser(id: string | null | undefined): string {
+  if (!id) return NODE_APP
   const row = getDb().prepare("SELECT app FROM users WHERE id = ?").get(id) as { app?: string } | undefined
   return row?.app ?? NODE_APP
 }
 
 /** 554-4: признаётся ли запись на сайте приложения `siteApp`: своя — да; запись узла — только архитектор (он над всеми
  *  приложениями) и гость (гостей заводит узел, 331); запись другого приложения — нет. */
-export function admittedTo(siteApp: string, userId: string, roles: string[]): boolean {
+export function admittedTo(siteApp: string, userId: string | null | undefined, roles: string[]): boolean {
   const own = appOfUser(userId)
   if (own === siteApp) return true
   return own === NODE_APP && (roles.includes("architect") || roles.includes("guest"))
