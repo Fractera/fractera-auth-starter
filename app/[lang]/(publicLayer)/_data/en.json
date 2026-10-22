@@ -20,6 +20,16 @@
     },
     {
       "kind": "text-h3",
+      "text": "Organizations and separate applications",
+      "bid": "ak7og"
+    },
+    {
+      "kind": "text-p",
+      "text": "Group people into organizations and filter them by organization in the Users tab. On an app factory every new application gets its own organization and its own accounts: one email in two applications means two separate people, and after signing in a visitor lands back on the page of the application they came from.",
+      "bid": "aw3pz"
+    },
+    {
+      "kind": "text-h3",
       "text": "One sign-in",
       "bid": "a92t0"
     },
