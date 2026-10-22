@@ -6,6 +6,7 @@ import { isOwnerAtMachine } from "@/lib/auth/owner-at-machine";
 import { isTemporaryPublicAddress } from "@/lib/auth/temporary-address";
 import { isShowcaseRequest } from "@/lib/showcase";
 import { getSession } from "@/lib/auth/get-session";
+import { elementOfHost, isFactory } from "@/lib/auth/app-hosts";
 import { authBaseFromHost, connectedDomainAuthBase, projectsBaseFromHost, publicAuthBaseFor } from "@/lib/auth-base-server";
 import { authUrl as nodeAuthUrl } from "@/lib/microservices/urls";
 import { temporaryAddressPage } from "@/lib/auth/temporary-address.page";
@@ -698,11 +699,33 @@ function withFramePolicy(req: NextRequest, res: NextResponse): NextResponse {
   return res
 }
 
+// 🔒 554-3: НА ЗАВОДЕ ВХОД В ПРИЛОЖЕНИЕ — БИЛЕТОМ НА ЕГО САЙТЕ, И ДЛЯ ПОДДОМЕНА ТОЖЕ. Владелец 2026-10-22: «будет возвращать на текущую
+// запись … чтобы он по ошибке не мог попасть например на главную страницу проекта». Элемент шлёт человека на `/login?callbackUrl=
+// <свой сайт>`; здесь адрес возврата заворачивается в единый вход (328): после входа центр выдаёт код, сайт элемента ставит билет
+// СВОЕЙ кукой (`/api/auth/callback`, есть в каждом элементе) и человек возвращается на ту же страницу этого сайта. Общая кука
+// зоны человеку приложения ничего не даёт (`/api/session`, 554-4). Формы не меняются. Единый проект — без изменений.
+function factoryReturnPage(request: NextRequest): URL | null {
+  const raw = request.nextUrl.searchParams.get("callbackUrl")
+  if (!raw || !isFactory()) return null
+  let target: URL
+  try { target = new URL(raw) } catch { return null }
+  if (target.protocol !== "https:" || target.pathname === "/api/auth/callback" || !elementOfHost(target.host)) return null
+  const ret = `${target.origin}/api/auth/callback?next=${encodeURIComponent(`${target.pathname}${target.search}`)}`
+  const page = new URL(request.nextUrl.pathname, request.url)
+  request.nextUrl.searchParams.forEach((v, k) => { if (k !== "callbackUrl") page.searchParams.set(k, v) })
+  page.searchParams.set("callbackUrl", `/api/auth/sso?return=${encodeURIComponent(ret)}`)
+  return page
+}
+
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   const path = request.nextUrl.pathname
   if (path.startsWith("/api/")) {
     if (!TEMPLATE_AUTH_API.has(path) && AUTH_API.some((p) => path === p || path.startsWith(p + "/"))) return NextResponse.next()
     return templateProxy(request)
+  }
+  if (path === "/login" || path === "/register") {
+    const page = factoryReturnPage(request)
+    if (page) return withFramePolicy(request, NextResponse.redirect(page, 307))
   }
   if (AUTH_PAGES.has(path)) return withFramePolicy(request, NextResponse.next())
   if (path === "/") {

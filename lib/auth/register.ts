@@ -5,6 +5,8 @@ import { getDb } from "@/lib/auth/db";
 import { nanoid } from "nanoid";
 import { auth } from "./auth";
 import { ALL_ROLES } from "./roles";
+import { headers } from "next/headers";
+import { appOfReturn } from "./apps";
 
 type RegisterResult =
   | { success: true; roles: string[] }
@@ -13,10 +15,13 @@ type RegisterResult =
 export async function register(email: string, password: string): Promise<RegisterResult> {
   const normalizedEmail = email.trim().toLowerCase();
   const db = getDb();
+  // 🔒 554-3: РЕГИСТРАЦИЯ — В ПРИЛОЖЕНИИ, КУДА ЧЕЛОВЕК ВЕРНЁТСЯ. Форма зовёт это действие со страницы
+  // `/register?callbackUrl=…`; её адрес приходит заголовком `referer` (`lib/auth/apps.ts` разворачивает его до сайта).
+  const app = appOfReturn((await headers()).get("referer"));
 
   const existing = db
-    .prepare("SELECT id FROM users WHERE email = ?")
-    .get(normalizedEmail);
+    .prepare("SELECT id FROM users WHERE email = ? AND app = ?")
+    .get(normalizedEmail, app);
 
   if (existing) {
     return { success: false, error: "This email is already registered" };
@@ -40,8 +45,8 @@ export async function register(email: string, password: string): Promise<Registe
       .get(sessUserId) as { id: string; provider: string } | undefined;
     if (guest && guest.provider === "guest") {
       db.prepare(
-        "UPDATE users SET email = ?, nickname = ?, password = ?, roles = ?, provider = 'credentials', updated_at = datetime('now') WHERE id = ?"
-      ).run(normalizedEmail, nickname, hashedPassword, JSON.stringify(["user"]), guest.id);
+        "UPDATE users SET email = ?, nickname = ?, password = ?, roles = ?, provider = 'credentials', app = ?, updated_at = datetime('now') WHERE id = ?"
+      ).run(normalizedEmail, nickname, hashedPassword, JSON.stringify(["user"]), app, guest.id);
       return { success: true, roles: ["user"] };
     }
   }
@@ -78,12 +83,13 @@ export async function register(email: string, password: string): Promise<Registe
   // новая роль появляется у владельца сама, а не после того, как кто-то вспомнит
   // про этот файл. `guest` исключён намеренно — это состояние «не вошёл», а не
   // право, и в учётной записи ему делать нечего.
-  const isFirst = !db.prepare("SELECT id FROM users LIMIT 1").get();
+  // 554-3: «первый» — только в узле; первый человек приложения завода — обычный пользователь этого приложения.
+  const isFirst = app === "node" && !db.prepare("SELECT id FROM users WHERE app = 'node' LIMIT 1").get();
   const roles: string[] = isFirst ? ALL_ROLES.filter((r) => r !== "guest") : ["user"];
 
   db.prepare(
-    "INSERT INTO users (id, email, nickname, password, roles, provider) VALUES (?, ?, ?, ?, ?, ?)"
-  ).run(nanoid(), normalizedEmail, nickname, hashedPassword, JSON.stringify(roles), "credentials");
+    "INSERT INTO users (id, email, nickname, password, roles, provider, app) VALUES (?, ?, ?, ?, ?, ?, ?)"
+  ).run(nanoid(), normalizedEmail, nickname, hashedPassword, JSON.stringify(roles), "credentials", app);
 
   return { success: true, roles };
 }

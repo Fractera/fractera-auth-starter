@@ -75,7 +75,7 @@ export const PATCH = auth(async function PATCH(req, context) {
 
   if (body.nickname !== undefined) { updates.push("nickname = ?"); values.push(body.nickname); }
   if (body.email !== undefined && body.email !== user.email) {
-    const existing = db.prepare("SELECT id FROM users WHERE email = ? AND id != ?").get(body.email, id);
+    const existing = db.prepare("SELECT id FROM users WHERE email = ? AND id != ? AND app = (SELECT app FROM users WHERE id = ?)").get(body.email, id, id); // 554: email уникален внутри приложения
     if (existing) return NextResponse.json({ error: "Email already in use" }, { status: 409 });
     updates.push("email = ?"); values.push(body.email);
   }

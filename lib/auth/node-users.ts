@@ -261,7 +261,7 @@ export function runBatch(db: Database.Database, actor: Actor, action: Action, id
           if (wallet && !WALLET.test(wallet)) { skip("bad-wallet"); continue; }
           const email = "email" in p ? clean(p.email, 254)?.toLowerCase() ?? "" : undefined;
           if (email !== undefined && !EMAIL.test(email)) { skip("bad-email"); continue; }
-          if (email !== undefined && email !== row.email && db.prepare("SELECT 1 FROM users WHERE email = ? AND id != ?").get(email, id)) { skip("email-taken"); continue; }
+          if (email !== undefined && email !== row.email && db.prepare("SELECT 1 FROM users WHERE email = ? AND id != ? AND app = (SELECT app FROM users WHERE id = ?)").get(email, id, id)) { skip("email-taken"); continue; }
           let nextRoles: string[] | undefined;
           if ("roles" in p) {
             nextRoles = [...new Set((p.roles ?? []).filter((r) => (ALL_ROLES as readonly string[]).includes(r)))];

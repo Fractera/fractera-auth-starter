@@ -3,6 +3,7 @@ import { decode as defaultDecode } from "next-auth/jwt";
 import { authConfig } from "./auth.config";
 import { SqliteAdapter } from "./sqlite-adapter";
 import { getDb } from "@/lib/auth/db";
+import { appOfRequest } from "@/lib/auth/apps";
 
 // 🔒 КУКА ОТ ПРОШЛОГО СЕРВЕРА НЕ ИМЕЕТ ПРАВА ЗАПИРАТЬ ВЛАДЕЛЬЦА (2026-08-20).
 //
@@ -33,15 +34,18 @@ async function decodeOrNoSession(params: Parameters<typeof defaultDecode>[0]) {
   }
 }
 
-const nextAuth = NextAuth({
+// 🔒 554-3: ЛЕНИВАЯ ИНИЦИАЛИЗАЦИЯ — АДАПТЕР ЗНАЕТ ПРИЛОЖЕНИЕ ЗАПРОСА. Поток Google и письма ищет и создаёт человека в приложении,
+// чей сайт стоит в адресе возврата (`lib/auth/apps.ts`); без запроса (`auth()` в серверном коде, `signIn` гостя) — `node`, как
+// прежде. Всё остальное в конфигурации — то же самое.
+const nextAuth = NextAuth((req) => ({
   ...authConfig,
   // Adapter persists OAuth users/accounts + magic-link verification tokens in
   // the auth service's SQLite DB. Session stays JWT — Credentials sign-ins
   // (password / admin-token / guest) continue to work exactly as before.
-  adapter: SqliteAdapter(getDb()),
+  adapter: SqliteAdapter(getDb(), appOfRequest(req)),
   session: { strategy: "jwt" },
   jwt: { decode: decodeOrNoSession },
-});
+}));
 
 export const { handlers, auth, signIn, signOut } = nextAuth;
 export const { GET, POST } = nextAuth.handlers;

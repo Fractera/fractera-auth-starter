@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto"
 import { readdirSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import type { NextRequest } from "next/server"
+import { factoryElementHost } from "@/lib/auth/app-hosts"
 
 // ЕДИНЫЙ ВХОД ДЛЯ ДОМЕНОВ ЭЛЕМЕНТОВ (узел, шаг 328). Слово владельца 2026-09-28: «у пользователя могут быть сотни AGI ITEMS,
 // у каждого может быть свой домен, и при этом их должна покрывать общая авторизация».
@@ -20,7 +21,8 @@ import type { NextRequest } from "next/server"
 // браузер его в центр не носит.
 // 🛑 ЖУРНАЛ — В ПАМЯТИ ПРОЦЕССА. Перезапуск службы гасит билеты; человек, вошедший в центр, получает новый код без пароля.
 
-export type Who = { userId: string; email: string | null; roles: string[] }
+// 554-4: `app` — приложение записи (`node` — ядро и все записи узла).
+export type Who = { userId: string; email: string | null; roles: string[]; app?: string }
 
 const CODE_TTL_MS = 60_000
 const TICKET_TTL_MS = 30 * 24 * 60 * 60_000
@@ -65,7 +67,8 @@ export function allowedReturn(url: string): URL | null {
   try { u = new URL(url) } catch { return null }
   if (u.protocol !== "https:") return null
   const host = u.hostname.toLowerCase()
-  return connectedDomains().some((d) => host === d || host === `www.${d}`) ? u : null
+  // 554-3: на заводе — и сайт кастомного элемента на поддомене зоны (вход в приложение идёт билетом).
+  return connectedDomains().some((d) => host === d || host === `www.${d}`) || factoryElementHost(host) ? u : null
 }
 
 export function issueCode(who: Who, returnTo: URL): string {

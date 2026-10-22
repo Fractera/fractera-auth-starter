@@ -7,6 +7,7 @@ import { compare } from "bcrypt-ts";
 import { getDb } from "@/lib/auth/db";
 import { revokeUser } from "@/lib/sso";
 import { recordSignIn } from "@/lib/auth/users-journal";
+import { appOfReturn, NODE_APP } from "@/lib/auth/apps";
 
 function buildProviders(): NextAuthConfig["providers"] {
   const providers: NextAuthConfig["providers"] = [];
@@ -45,10 +46,17 @@ function buildProviders(): NextAuthConfig["providers"] {
 
         if (!email) return null;
 
+        // 🔒 554-3: ЧЕЛОВЕК ИЩЕТСЯ В ПРИЛОЖЕНИИ, КУДА ОН ВОЗВРАЩАЕТСЯ. Форма шлёт `callbackUrl` — адрес страницы входа, внутри
+        // которого адрес сайта (`lib/auth/apps.ts`). Своей записи в приложении нет — подходят ещё две записи узла: гость (его
+        // заводит `/api/auth/guest`, он живёт в `node`) и архитектор узла (он признаётся во всех приложениях). Своя запись всегда
+        // первая.
+        const app = appOfReturn(credentials?.callbackUrl as string | undefined);
         const db = getDb();
         const user = db
-          .prepare("SELECT id, email, nickname, password, roles, provider, is_active FROM users WHERE email = ?")
-          .get(email) as {
+          .prepare(`SELECT id, email, nickname, password, roles, provider, is_active, app FROM users WHERE email = ?
+            AND (app = ? OR (app = 'node' AND (provider = 'guest' OR roles LIKE '%"architect"%')))
+            ORDER BY app = ? DESC LIMIT 1`)
+          .get(email, app, app) as {
           id: string;
           email: string;
           nickname: string | null;
@@ -56,6 +64,7 @@ function buildProviders(): NextAuthConfig["providers"] {
           roles: string;
           provider: string;
           is_active: number;
+          app: string;
         } | undefined;
 
         if (!user) return null;
@@ -70,7 +79,7 @@ function buildProviders(): NextAuthConfig["providers"] {
           // базы: прежде эта ветка пускала по одному email любую запись без пароля — пользователей Google и письма, в том числе
           // архитектора, с любым паролем в форме.
           if (user.provider !== "guest") return null;
-          return { id: user.id, email: user.email, name: user.nickname, roles };
+          return { id: user.id, email: user.email, name: user.nickname, roles, app: user.app };
         }
 
         if (!password) return null;
@@ -78,7 +87,7 @@ function buildProviders(): NextAuthConfig["providers"] {
         const valid = await compare(password, user.password);
         if (!valid) return null;
 
-        return { id: user.id, email: user.email, name: user.nickname, roles };
+        return { id: user.id, email: user.email, name: user.nickname, roles, app: user.app };
       },
     })
   );
@@ -175,7 +184,9 @@ export const authConfig: NextAuthConfig = {
       const db = getDb();
       const byId = user?.id ? (db.prepare("SELECT is_active FROM users WHERE id = ?").get(user.id) as { is_active: number } | undefined) : undefined;
       const mail = user?.email?.trim().toLowerCase();
-      const row = byId ?? (mail ? (db.prepare("SELECT is_active FROM users WHERE email = ?").get(mail) as { is_active: number } | undefined) : undefined);
+      // 554-3: запись по email — в приложении этого входа (адаптер кладёт его в `user.app`).
+      const app = (user as { app?: string } | undefined)?.app ?? NODE_APP;
+      const row = byId ?? (mail ? (db.prepare("SELECT is_active FROM users WHERE email = ? AND app = ?").get(mail, app) as { is_active: number } | undefined) : undefined);
       return !row || row.is_active === 1;
     },
     // OAuth / magic-link complete on the auth host (auth.<domain>) but usually
@@ -203,6 +214,8 @@ export const authConfig: NextAuthConfig = {
       if (user) {
         token.id = user.id as string;
         token.roles = (user as { roles?: string[] }).roles ?? ["user"];
+        // 554-3: приложение записи — по нему `/api/session` и единый вход решают, где человека признают.
+        token.app = (user as { app?: string }).app ?? NODE_APP;
       }
       return token;
     },
@@ -210,6 +223,7 @@ export const authConfig: NextAuthConfig = {
       if (session.user) {
         session.user.id = token.id as string;
         (session.user as { roles?: string[] }).roles = token.roles as string[];
+        (session.user as { app?: string }).app = (token.app as string | undefined) ?? NODE_APP;
       }
       return session;
     },
