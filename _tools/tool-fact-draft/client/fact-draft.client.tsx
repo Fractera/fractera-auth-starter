@@ -79,10 +79,10 @@ export function FactDraft({
     <div data-block="l1bkd" data-fact-draft className="flex flex-col gap-2 rounded-lg border border-border p-3">
       <div data-block="ce79l" className="flex items-center gap-2">
         <Sparkles className="size-4 text-muted-foreground" />
-        <Small className="font-medium text-foreground">{labels.title}</Small>
+        <Small data-block="yilaj" className="font-medium text-foreground">{labels.title}</Small>
       </div>
 
-      <Small className="leading-relaxed text-muted-foreground">{labels.hint}</Small>
+      <Small data-block="xbazb" className="leading-relaxed text-muted-foreground">{labels.hint}</Small>
 
       <VoiceControl
         id="fact-draft-words"
@@ -97,7 +97,7 @@ export function FactDraft({
       />
 
       {failure && (
-        <Small data-fact-draft-failure={failure} className="text-warning">
+        <Small data-block="satng" data-fact-draft-failure={failure} className="text-warning">
           {labels.failures[failure]}
         </Small>
       )}
