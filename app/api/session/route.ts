@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
 import { shouldBypassAuth } from "@/lib/auth-bypass";
 import { liveUser } from "@/lib/guest-guard";
-import { appOfUser, NODE_APP } from "@/lib/auth/apps";
+import { admittedTo, appOfUser, NODE_APP } from "@/lib/auth/apps";
+import { appOfElement, ELEMENT_HEADER } from "@/lib/auth/caller";
 
 const ALLOWED = (process.env.ALLOWED_ORIGINS ?? "")
   .split(",")
@@ -54,6 +55,17 @@ export const GET = auth(function GET(req) {
   // доходит до каждого из них; человек приложения живёт билетом на сайте своего приложения (`/api/auth/sso` → `/api/auth/ticket`).
   // Записи узла — как прежде.
   if (!session?.user || !live || appOfUser(session.user.id) !== NODE_APP) {
+    return NextResponse.json({ error: "Unauthorized" }, {
+      status: 401,
+      headers: corsHeaders(origin),
+    });
+  }
+  // 🔒 580: САЙТ ПРИЛОЖЕНИЯ ЗАВОДА ПРИЗНАЁТ ЗАПИСЬ УЗЛА ТОЛЬКО У АРХИТЕКТОРА И ГОСТЯ — то же правило, что у единого входа (`admittedTo`).
+  // Владелец 2026-10-24: администратор «может быть связан только с той организации через которую пользователь зарегистрировался».
+  // ✗ Без этого администратор узла по общей куке зоны был бы администратором каждого приложения завода. Сервер элемента называет себя
+  // (`x-fractera-element`); не назвал (элементы до 580) или элемент — не приложение завода — как прежде.
+  const element = req.headers.get(ELEMENT_HEADER);
+  if (element && !admittedTo(appOfElement(element), session.user.id, live.roles)) {
     return NextResponse.json({ error: "Unauthorized" }, {
       status: 401,
       headers: corsHeaders(origin),
