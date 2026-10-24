@@ -107,9 +107,10 @@ const ALLOWED = new Map([
   ['app/api/session/route.ts', 'auth: текущая сессия или 401 — её спрашивает каждый элемент узла (549-5)'],
   ['app/api/session/verify/route.ts', 'auth: проверка токена сессии для другой службы (549-5)'],
   ['app/api/user-count/route.ts', 'auth: сколько учётных записей — первый запуск (549-5)'],
-  ['app/api/admin/users/route.ts', 'auth: список и создание пользователей — только admin (549-5)'],
-  ['app/api/admin/users/[id]/route.ts', 'auth: правка и удаление пользователя — только admin (549-5)'],
+  ['app/api/admin/users/route.ts', 'auth: список людей одного приложения — его admin или архитектор узла (549-5, 580)'],
+  ['app/api/admin/users/[id]/route.ts', 'auth: правка и удаление человека приложения — его admin или архитектор узла (549-5, 580)'],
   ['app/api/node-users/[[...path]]/route.ts', 'auth: пользователи узла для вкладки ядра — список, истории, организации, пакет (559-3)'],
+  ['app/api/app-users/[[...path]]/route.ts', 'auth: люди одного приложения для его сайта — список, истории, пакет без организаций (580-2)'],
 ])
 
 const found = []

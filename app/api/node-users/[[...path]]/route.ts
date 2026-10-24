@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getDb } from "@/lib/auth/db"
 import { fromOutside } from "@/lib/a2a/boundary"
 import { revokeUser } from "@/lib/sso"
-import { dataUrl } from "@/lib/microservices/urls"
+import { deleteMediaLater } from "@/lib/auth/media-delete"
 import { appOrg, createOrg, historyOf, HISTORY_KINDS, listOrgs, listUsers, runBatch, type Action, type HistoryKind } from "@/lib/auth/node-users"
 
 // ДВЕРЬ ПОЛЬЗОВАТЕЛЕЙ УЗЛА ДЛЯ ЯДРА (узел, шаг 559-3). Работа — `lib/auth/node-users.ts`.
@@ -77,23 +77,8 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     const r = runBatch(db, { id: actorId, roles: actorRoles }, body.action as Action, ids, body.value)
     if ("error" in r) return json({ ok: false, error: r.error }, r.error === "only-architect" ? 403 : 400)
     for (const id of r.revoke) revokeUser(id)
-    void deleteMedia(r.mediaToDelete)
+    deleteMediaLater(r.mediaToDelete)
     return json({ ok: true, done: r.done, skipped: r.skipped })
   }
   return json({ ok: false, error: "unknown-path" }, 404)
-}
-
-// Файл аватарки в хранилище узла удаляется после записи (обезличивание, замена): слой данных пересылает `/media/*` хранилищу.
-async function deleteMedia(ids: string[]): Promise<void> {
-  const base = dataUrl()
-  const key = process.env.DATA_SECRET || process.env.DATA_API_KEY || ""
-  if (!ids.length || !base || !key) return
-  for (const id of ids) {
-    try {
-      const r = await fetch(`${base}/media/${encodeURIComponent(id)}`, { method: "DELETE", headers: { "X-Data-Secret": key }, signal: AbortSignal.timeout(10_000) })
-      if (!r.ok) console.warn(`[users] файл ${id} не удалён: ${r.status}`)
-    } catch (e) {
-      console.warn(`[users] файл ${id} не удалён: ${e instanceof Error ? e.message : String(e)}`)
-    }
-  }
 }

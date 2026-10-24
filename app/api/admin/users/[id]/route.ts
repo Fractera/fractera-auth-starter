@@ -4,21 +4,25 @@ import { auth } from "@/lib/auth/auth";
 import { getDb } from "@/lib/auth/db";
 import { runBatch } from "@/lib/auth/node-users";
 import { revokeUser } from "@/lib/sso";
+import { appOfUser } from "@/lib/auth/apps";
+import { appOfElement, callerOf, ELEMENT_HEADER, isNodeArchitect, mayAdminister } from "@/lib/auth/caller";
 
 export const PATCH = auth(async function PATCH(req, context) {
-  const session = req.auth;
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const roles: string[] = (session.user as { roles?: string[] }).roles ?? [];
-  // 🔒 ПРАВИТЬ ЗАПИСЬ МОГУТ АДМИНИСТРАТОР И АРХИТЕКТОР (владелец 2026-08-21),
-  // но роль архитектора остаётся за архитектором — см. ниже.
-  const callerIsArchitect = roles.includes("architect");
-  if (!callerIsArchitect && !roles.includes("admin")) {
+  // 580: человек — по куке или по билету с петли; право — по приложению записи (`lib/auth/caller.ts`).
+  const caller = callerOf(req);
+  if (!caller) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const app = appOfElement(req.headers.get(ELEMENT_HEADER));
+  // 🔒 ПРАВИТЬ ЗАПИСЬ МОГУТ АДМИНИСТРАТОР И АРХИТЕКТОР (владелец 2026-08-21) — своего приложения; архитектор узла — любого (580).
+  // Роль архитектора остаётся за архитектором узла — см. ниже.
+  const callerIsArchitect = isNodeArchitect(caller);
+  if (!mayAdminister(caller, app)) {
     return NextResponse.json({ error: "Forbidden", requires: ["admin", "architect"] }, { status: 403 });
   }
 
   const params = await (context?.params as Promise<{ id: string }>);
   const id = params?.id;
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  if (appOfUser(id) !== app) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
   // Role-protection rules (enforced here):
   //   1. A user can NEVER remove the architect role from themselves — we block
@@ -31,8 +35,7 @@ export const PATCH = auth(async function PATCH(req, context) {
   //      второму аккаунту, — то есть повышает себя до полного доступа, и
   //      разница между двумя ролями исчезает в первый же день. Проверяется
   //      ниже, когда известны и текущие роли записи, и запрошенные.
-  const currentUserId = (session.user as { id?: string }).id;
-  if (id === currentUserId) return NextResponse.json({ error: "Cannot modify your own account" }, { status: 400 });
+  if (id === caller.id) return NextResponse.json({ error: "Cannot modify your own account" }, { status: 400 });
 
   const body = await req.json() as {
     nickname?: string;
@@ -92,16 +95,19 @@ export const PATCH = auth(async function PATCH(req, context) {
 });
 
 export const DELETE = auth(async function DELETE(req, context) {
-  const session = req.auth;
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const roles: string[] = (session.user as { roles?: string[] }).roles ?? [];
-  if (!roles.includes("architect")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const caller = callerOf(req);
+  if (!caller) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Обезличивает только архитектор узла (559, 580).
+  if (!isNodeArchitect(caller)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const app = appOfElement(req.headers.get(ELEMENT_HEADER));
 
   const params = await (context?.params as Promise<{ id: string }>);
   const id = params?.id;
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  if (appOfUser(id) !== app) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-  const currentUserId = (session.user as { id?: string }).id;
+  const currentUserId = caller.id;
+  const roles = caller.roles;
   if (id === currentUserId) return NextResponse.json({ error: "Cannot delete your own account" }, { status: 400 });
 
   // 559-3 (владелец 2026-10-21: «Удаление пользователя возможно только таким образом чтобы удалялись имя, фамилии, аватарка, способ

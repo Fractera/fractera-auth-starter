@@ -57,10 +57,15 @@ const statusOf = (r: { is_active: number; deleted_at: string | null }): UserStat
   r.deleted_at ? "anonymized" : r.is_active === 1 ? "active" : "blocked";
 
 /** Страница пользователей: поиск, фильтры организации и роли, сортировка по дате регистрации. */
-export function listUsers(dbIn: Database.Database, q: { q?: string | null; org?: string | null; role?: string | null; sort?: string | null; page?: unknown; perPage?: unknown }) {
+export function listUsers(dbIn: Database.Database, q: { q?: string | null; org?: string | null; role?: string | null; sort?: string | null; page?: unknown; perPage?: unknown; app?: string | null }) {
   const db = fns(dbIn);
   const where: string[] = [];
   const args: unknown[] = [];
+  // 580: люди одного приложения (`users.app`) — для таблицы на сайте элемента; вкладка ядра зовёт без `app` и видит всех.
+  if (q.app) {
+    where.push("u.app = ?");
+    args.push(q.app);
+  }
   const text = (q.q ?? "").trim().slice(0, 100);
   if (text) {
     const like = `%${LIKE_ESCAPE(text.toLowerCase())}%`;
