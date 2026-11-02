@@ -12,6 +12,7 @@ import { register } from "@/lib/auth/register";
 import { getAuthStrings, detectBrowserLang, DEFAULT_AUTH_LANG, type AuthStrings, withLang } from "@/lib/i18n/auth-strings";
 import { SignedInGate } from "../../_components/signed-in-card.client";
 import { rememberSignedInHere } from "@/lib/auth/device-memory";
+import { FirstAccountWarning } from "./first-account-warning.client";
 
 export function AccessDeniedModal({ onClose, s }: { onClose: () => void; s: AuthStrings }) {
   return (
@@ -191,6 +192,7 @@ function RegisterForm() {
             <h1 className="text-xl font-semibold">{s.createAccountTitle}</h1>
             <p className="text-sm text-muted-foreground">{s.registerSubtitle}</p>
           </div>
+          <FirstAccountWarning s={s} />
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="reg-email">{s.email}</Label>
