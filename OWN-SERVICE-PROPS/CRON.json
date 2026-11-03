@@ -1,15 +1,20 @@
 {
-  "why": "Node step 636 (owner 2026-11-03, «Да, оба (Рекомендую)»: a clock and a calendar for every native element; 551-1 had taken them away): what this element CAN run on a schedule — the catalog of events (handlers written in advance, build process). The person's schedule is NOT here: it is data, `data/cron.json` (outside git) — written on the person's word, no code, no commit, no rebuild. The core draws events + schedule as this element's calendar «Cron events» (data, storage, vectors and graph: «Backup → Cron events»); the element's server checks the clock once a minute (lib/cron/). Times are the local time of the computer. A missed run (computer off) is not caught up. The clock speaks only to this element's own agent (owner 2026-11-03: «Нашей архитектуре никто не может взаимодействовать с какими-либо агентами кроме самих агентов»). Skill: schedule-cron-automations-calendar-reminders-recurring-and-one-time-tasks. Never published in /.well-known/agent-card.json.",
+  "why": "Node step 636 (owner 2026-11-03, «Да, оба (Рекомендую)»: a clock and a calendar for every native element; 551-1 had taken them away): what this element CAN run on a schedule — the catalog of events (handlers written in advance, build process). The person's schedule is NOT here: it is data, `data/cron.json` (outside git) — written on the person's word, no code, no commit, no rebuild. The core draws events + schedule as this element's calendar «Cron events» (data, storage, vectors and graph: «Backup → Cron events»); the element's server checks the clock once a minute (lib/cron/). Times are the local time of the computer. A missed run (computer off) is not caught up. The clock speaks only to this element's own agent (owner 2026-11-03: «Нашей архитектуре никто не может взаимодействовать с какими-либо агентами кроме самих агентов»). Skill: schedule-cron-automations-calendar-reminders-recurring-and-one-time-tasks. Never published in /.well-known/agent-card.json. Node step 636-8 (owner 2026-11-03: «события крон должны приходить не затрагивая искусственный интеллект»): a reminder is `node-notice` — the core's notice door puts the words into the main chat; `agent-task` only for work that needs the agent at that time.",
   "events": [
+    {
+      "id": "node-notice",
+      "name": "Notice in the main chat",
+      "description": "Sends the schedule's own text (field «message») into the node's main chat through the core's notice door: «⏰ Reminder · <this element>» and the words as a quote — no model, no agent woken (node step 636-8). Any reminder for the person is this event."
+    },
     {
       "id": "agent-task",
       "name": "Wake this element's agent",
-      "description": "Wakes this element's own agent with the schedule's own text (field «message»): work for it at that time, or words for the person — the agent passes them to the core's main agent (npm run tell-core), which tells the person. No other agent is reached (node step 636)."
+      "description": "Wakes this element's own agent with the schedule's own text (field «message») for work that needs it at that time — a check, a copy, a report; the session costs the subscription. Words for the person are not this event: they are `node-notice`. No other agent is reached (node step 636)."
     },
     {
       "id": "telegram-message",
       "name": "Message in Telegram",
-      "description": "Sends the schedule's own text (field «message») to this element's own Telegram bot. Any reminder is this event with its text — no new code."
+      "description": "Sends the schedule's own text (field «message») to this element's OWN Telegram bot — only when the person talks to this element in that bot and asked there; any other reminder is `node-notice` (the main chat)."
     }
   ]
 }
