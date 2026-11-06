@@ -75,6 +75,33 @@
     },
     {
       "kind": "block-section-head",
+      "id": "power",
+      "title": "On from the start",
+      "bid": "q0000"
+    },
+    {
+      "kind": "text-p",
+      "text": "This element starts with the node. The node holds the switch: the architect turns it off or on with a word to the main agent, or on the element's settings page in the core.",
+      "bid": "q0001"
+    },
+    {
+      "kind": "block-section-head",
+      "id": "guests",
+      "title": "Guests and two ready providers",
+      "bid": "q0002"
+    },
+    {
+      "kind": "text-p",
+      "text": "Guest sign-in is built in: a guest account appears on request and remembers what the visitor did in this browser, a half-filled cart for one. Guests are limited: a cap per address and an overall ceiling, at which the guest who has been away longest goes first.",
+      "bid": "q0003"
+    },
+    {
+      "kind": "text-p",
+      "text": "Google and the Resend magic link are already installed. To turn them on, enter their keys; no code is needed.",
+      "bid": "q0004"
+    },
+    {
+      "kind": "block-section-head",
       "id": "solves",
       "title": "What changes for you",
       "bid": "ab000"
@@ -199,6 +226,31 @@
     },
     {
       "kind": "block-section-head",
+      "id": "builder",
+      "title": "Your own builder comes with it",
+      "bid": "q0005"
+    },
+    {
+      "kind": "text-p",
+      "text": "Every element of the node comes with its own Claude Code agent and can get its own Telegram bot. When something in this element should change, write to its bot from your phone, and the agent updates the logic or the design.",
+      "bid": "q0006"
+    },
+    {
+      "kind": "text-p",
+      "text": "The agent works only in its element's folder and never reads the whole node, so each change costs fewer tokens. Your Claude Code subscription pays for it.",
+      "bid": "q0007"
+    },
+    {
+      "kind": "text-list",
+      "items": [
+        "The element's bot is connected in the core, on its «Telegram» page.",
+        "The agent returns a commit; you look at it in «Preview» and accept it or turn it down.",
+        "At the computer, the agent's terminal is in the core, in this element's «Build»."
+      ],
+      "bid": "q0008"
+    },
+    {
+      "kind": "block-section-head",
       "id": "credits",
       "title": "Open source",
       "bid": "ag000"
@@ -207,6 +259,35 @@
       "kind": "text-p",
       "text": "Built by Fractera for the [Lagrix](https://lagrix.dev) protocol and for any web2 project that needs sign-in. MIT license, the code is at [github.com/Fractera/fractera-auth-starter](https://github.com/Fractera/fractera-auth-starter).",
       "bid": "ag001"
+    },
+    {
+      "kind": "block-section-head",
+      "id": "faq",
+      "title": "Questions and answers",
+      "bid": "q0009"
+    },
+    {
+      "kind": "block-faq",
+      "title": "Questions and answers",
+      "items": [
+        {
+          "q": "Does a visitor have to register?",
+          "a": "No. A guest account appears on request, so a visitor can start without a password; sign-in is asked only where a route needs it."
+        },
+        {
+          "q": "How do I turn on Google or Resend?",
+          "a": "Both are installed. Enter their keys and they open on the sign-in screen; email and password keep working beside them."
+        },
+        {
+          "q": "Who becomes the architect?",
+          "a": "The first account registered on this computer, for good. Create it before you connect your own domain."
+        },
+        {
+          "q": "Where are the accounts kept?",
+          "a": "In one file on your computer, never in git. You see and change them in the core, on this element's «Users» tab."
+        }
+      ],
+      "bid": "q000a"
     }
   ]
 }
