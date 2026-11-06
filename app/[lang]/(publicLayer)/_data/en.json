@@ -1,13 +1,17 @@
 {
-  "title": "Sign-in service",
-  "description": "To build your application, open the Authorization tab in the core and activate your programmer agent: with it, right in the interface, you change how this application is built.",
+  "title": "Fractera Auth — sign-in for every element of your node",
+  "description": "One service tells every element who came and with which roles. Email and password work from the start, guests come on demand, and the accounts stay on your own computer.",
   "keywords": "",
   "blocks": [
     {
+      "kind": "widget-static-auth-landing",
+      "bid": "aw001"
+    },
+    {
       "kind": "block-hero-centered",
-      "pill": "Agentic engineering infrastructure",
-      "title": "Sign-in service",
-      "description": "To build your application, open the Authorization tab in the core and activate your programmer agent: with it, right in the interface, you change how this application is built.",
+      "pill": "OpenSource Web4 agent & app starter kit",
+      "title": "Sign-in for every element of your node",
+      "description": "One service tells every element who came and with which roles. Email and password work from the start, guests come on demand, and the accounts stay on your own computer.",
       "cta": {
         "label": "Sign in",
         "href": "/login"
@@ -16,53 +20,193 @@
         "label": "Create an account",
         "href": "/register"
       },
-      "bid": "agupq"
+      "bid": "ah001"
     },
     {
-      "kind": "text-h3",
-      "text": "Organizations and separate applications",
-      "bid": "ak7og"
+      "kind": "block-section-head",
+      "id": "route",
+      "title": "How a person gets in",
+      "bid": "aa000"
     },
     {
-      "kind": "text-p",
-      "text": "Group people into organizations and filter them by organization in the Users tab. On an app factory every new application gets its own organization and its own accounts: one email in two applications means two separate people, and after signing in a visitor lands back on the page of the application they came from.",
-      "bid": "aw3pz"
-    },
-    {
-      "kind": "text-h3",
-      "text": "One sign-in",
-      "bid": "a92t0"
+      "kind": "text-h4",
+      "text": "A page asks who came",
+      "bid": "aa001"
     },
     {
       "kind": "text-p",
-      "text": "The only service that grants access on the node",
-      "bid": "aty0f"
+      "text": "An element sends the visitor’s cookie to /api/session and gets the session with its roles, or 401.",
+      "bid": "aa002"
     },
     {
-      "kind": "text-h3",
-      "text": "Roles",
-      "bid": "a489h"
-    },
-    {
-      "kind": "text-p",
-      "text": "Who reads and changes what is decided here",
-      "bid": "a3tb4"
-    },
-    {
-      "kind": "text-h3",
-      "text": "82 languages",
-      "bid": "adb8w"
+      "kind": "text-h4",
+      "text": "The service checks the entry",
+      "bid": "aa003"
     },
     {
       "kind": "text-p",
-      "text": "The sign-in screens speak the visitor's language",
-      "bid": "adbxt"
+      "text": "Email and password from the start; Google and a Resend magic link open as soon as their keys are in.",
+      "bid": "aa004"
     },
     {
-      "kind": "block-warning-card",
-      "title": "Better at an early stage",
-      "text": "Do this work early in the life of the application: it carries the highest risk. If sign-in breaks, nobody can use the protected routes — architects included. Sign-in can be restored through the development mode.",
-      "bid": "a7r9i"
+      "kind": "text-h4",
+      "text": "Roles decide the rest",
+      "bid": "aa005"
+    },
+    {
+      "kind": "text-p",
+      "text": "Fourteen roles and the guest, and every route of an element says who may open it.",
+      "bid": "aa006"
+    },
+    {
+      "kind": "text-h4",
+      "text": "An element on its own domain",
+      "bid": "aa007"
+    },
+    {
+      "kind": "text-p",
+      "text": "It signs people in through the single sign-on: a one-time code becomes a ticket of that site.",
+      "bid": "aa008"
+    },
+    {
+      "kind": "text-small",
+      "text": "The first account registered on this computer becomes the architect of the node for good.",
+      "bid": "aa009"
+    },
+    {
+      "kind": "block-section-head",
+      "id": "solves",
+      "title": "What changes for you",
+      "bid": "ab000"
+    },
+    {
+      "kind": "text-table",
+      "head": [
+        "Without it",
+        "With the sign-in service"
+      ],
+      "rows": [
+        [
+          "Every element would build its own sign-in",
+          "Every element asks one service who came"
+        ],
+        [
+          "A visitor’s half-filled cart is lost",
+          "A guest account keeps what a visitor did in this browser"
+        ],
+        [
+          "Roles are copied by hand into every app",
+          "Fourteen roles and the guest, set for every route"
+        ],
+        [
+          "The accounts sit on someone else’s server",
+          "They stay in one file on your computer, never in git"
+        ]
+      ],
+      "bid": "ab001"
+    },
+    {
+      "kind": "block-section-head",
+      "id": "turn-on",
+      "title": "How to start",
+      "bid": "ac000"
+    },
+    {
+      "kind": "text-list",
+      "items": [
+        "On this computer, register the first account: it becomes the architect of the node.",
+        "Connect your own domain: on the temporary address sign-in and registration are closed.",
+        "Add a Google or a Resend key when you want those ways in; email and password need nothing."
+      ],
+      "bid": "ac001"
+    },
+    {
+      "kind": "text-small",
+      "text": "Every account of the node is seen and changed in the core, on the Users tab of this element. Deleting an account wipes the personal data and keeps the identifier and the journal.",
+      "bid": "ac002"
+    },
+    {
+      "kind": "block-section-head",
+      "id": "connect",
+      "title": "Ask who came",
+      "bid": "ad000"
+    },
+    {
+      "kind": "text-p",
+      "text": "An element of the node asks the service with the visitor’s cookie:",
+      "bid": "ad001"
+    },
+    {
+      "kind": "text-code",
+      "text": "const r = await fetch(`${process.env.AUTH_SERVICE_URL}/api/session`, {\n  headers: { cookie: request.headers.get('cookie') ?? '' },\n})\nconst session = r.ok ? await r.json() : null // null — nobody signed in",
+      "bid": "ad002"
+    },
+    {
+      "kind": "text-p",
+      "text": "Guests come on demand and stay bounded: a limit per address, and a ceiling on guest records, where the guest inactive the longest leaves first.",
+      "bid": "ad003"
+    },
+    {
+      "kind": "block-section-head",
+      "id": "hood",
+      "title": "Under the hood",
+      "bid": "ae000"
+    },
+    {
+      "kind": "text-table",
+      "head": [
+        "Part",
+        "What it does"
+      ],
+      "rows": [
+        [
+          "NextAuth 5",
+          "Providers, callbacks, sessions and sign-out"
+        ],
+        [
+          "SQLite",
+          "One file of accounts, organizations and roles on this computer, never in git"
+        ],
+        [
+          "/api/session",
+          "Who came and with which roles, or 401"
+        ],
+        [
+          "/api/auth/sso",
+          "Single sign-on for an element on its own domain"
+        ],
+        [
+          "82 languages",
+          "Every sign-in screen speaks the visitor’s language, built into the page"
+        ],
+        [
+          "Applications",
+          "On an app factory each application has its own people: one email in two applications is two accounts"
+        ]
+      ],
+      "bid": "ae001"
+    },
+    {
+      "kind": "block-section-head",
+      "id": "more",
+      "title": "Change it early",
+      "bid": "af000"
+    },
+    {
+      "kind": "text-p",
+      "text": "Change sign-in early in the life of your application: it carries the highest risk. If sign-in breaks, nobody opens the protected routes, the architects included, and it is restored through the development mode.",
+      "bid": "af001"
+    },
+    {
+      "kind": "block-section-head",
+      "id": "credits",
+      "title": "Open source",
+      "bid": "ag000"
+    },
+    {
+      "kind": "text-p",
+      "text": "Built by Fractera for the [Lagrix](https://lagrix.dev) protocol and for any web2 project that needs sign-in. MIT license, the code is at [github.com/Fractera/fractera-auth-starter](https://github.com/Fractera/fractera-auth-starter).",
+      "bid": "ag001"
     }
   ]
 }
