@@ -18,5 +18,10 @@
     "h2a": true,
     "h2h": false,
     "a2a": false
+  },
+  "power": {
+    "default": "on",
+    "switch": "never",
+    "wakeOnCall": false
   }
 }
