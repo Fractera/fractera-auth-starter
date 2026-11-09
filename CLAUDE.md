@@ -30,9 +30,9 @@ element is a microservice that answers its neighbours and asks them for help; to
 - **On or off.** The node holds the switch; you declare your default in the passport and pass requests.
 - **Your boundary is this folder.** Every file in it — `package.json` (`npm run` lists your commands) and `proxy.ts` too — you read
   without asking. The node you know from `npm run passport -- me` (block `node`), the core's main agent and the core's doors — never
-  from the core's files or a neighbour's. Reading or changing anything outside this folder waits for your architect's explicit «yes»: the
-  node makes Claude Code ask in your terminal, and when you were woken from Telegram it sends them the link. Your own data
-  (`SERVICE_DATA_DIR`) is yours.
+  from the core's files or a neighbour's. Reading or changing anything outside this folder is decided by the core's main agent (the owner,
+  2026-11-09): the node's guard asks it, and your call gets its «yes» or its «no» with the way inside your folder — the node's keys and a
+  neighbour's code or keys are never opened. Your own data (`SERVICE_DATA_DIR`) is yours.
 
 ## 3. Your session
 
