@@ -89,6 +89,9 @@ export function pageToMarkdown(body: PageItem[], siteName: string, widget?: Widg
       .flatMap(b => [...lines(b, widget), ''])
       .join('\n')
       .replace(/\n{3,}/g, '\n\n')
+      // 717-9: a section that brings its own heading (questions and answers) right after `section-head` of the same words — the page
+      // draws the heading once, the twin says it once too (same level, same words; the first stays).
+      .replace(/^(#{1,6}) (.+)\n\n\1 \2$/gm, '$1 $2')
       .trim(),
     siteName,
   )

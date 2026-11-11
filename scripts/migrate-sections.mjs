@@ -84,7 +84,10 @@ for (const s of sections) {
   let body = mdLines.slice(i + 1, end)
   if (/\{\s*$/.test(mdLines[i]) && /^\s*\}\s*$/.test(body[body.length - 1] ?? '')) body = body.slice(0, -1)
   const ind = Math.min(...body.filter((l) => l.trim()).map((l) => l.match(/^\s*/)[0].length))
-  s.md = body.map((l) => (l.trim() ? '  ' + l.slice(ind) : ''))
+  // 717-9: the old switch named the item by its own parameter (`block`, `b` …); in the folder the function's parameter is `section`
+  const param = /switch\s*\(\s*(\w+)\.kind\s*\)/.exec(md ?? "")?.[1]
+  const rename = (l) => (param && param !== 'section' ? l.replace(new RegExp(`\\b${param}\\b`, 'g'), 'section') : l)
+  s.md = body.map((l) => (l.trim() ? '  ' + rename(l.slice(ind)) : ''))
   cut.push([i, end])
 }
 
@@ -279,6 +282,9 @@ for (const f of listed()) {
   if (isCode || /\.md$/.test(f)) t = t.replace(kindRe, MAP.kinds.to).replace(doubled, MAP.kinds.to)
   if (isJson && /^app\//.test(f)) {
     t = t.replace(/("kind"\s*:\s*")block-/g, '$1section-').replace(doubled, MAP.kinds.to)
+    // 717-9: an item's own key in page data (`"blockKey": "uses"`) is read by the code as `itemKey` now — left as it was, it is
+    // silently ignored and the section's anchor changes (found on the graph starter's cards)
+    t = t.replace(/"blockKey"(\s*:)/g, '"itemKey"$1')
     let top = null
     try { top = JSON.parse(t) } catch { /* not JSON — left */ }
     if (top && Array.isArray(top[MAP.pageKey.from])) {
