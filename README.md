@@ -38,7 +38,7 @@ merges it with your commits, and the element's agent resolves a conflict.
 | `GET /api/user-count` | how many accounts exist — used to decide first run |
 | `/login` · `/register` · `/signout` · `/guest-login` · `/logout` | the pages a person sees |
 | `/` | the signed-in card; without a session cookie `307` to `/<default language>` |
-| `/en`, `/ru` | the public home page of the element (catalog blocks, `app/[lang]/(publicLayer)/_data`) |
+| `/en`, `/ru` | the public home page of the element (its own sections, `app/[lang]/(publicLayer)/_data`) |
 | `GET|PATCH /api/settings/design` · `POST /api/settings/changed` | the template doors of the own DESIGN-CONFIG and the design/settings signal (key `X-Settings-Key`) |
 
 Where it lives: the forms and their root layout — `app/(auth)/`; sign-out — `app/logout/`; the doors — `app/api/{auth,session,user-count,admin}/`;

@@ -2,13 +2,13 @@
   "title": "Fractera Auth — sign-in for every element of your node",
   "description": "One service tells every element who came and with which roles. Email and password work from the start, guests come on demand, and the accounts stay on your own computer.",
   "keywords": "",
-  "blocks": [
+  "body": [
     {
       "kind": "widget-static-auth-landing",
       "bid": "aw001"
     },
     {
-      "kind": "block-hero-centered",
+      "kind": "section-hero-centered",
       "pill": "OpenSource Web4 agent & app starter kit",
       "title": "Sign-in for every element of your node",
       "description": "One service tells every element who came and with which roles. Email and password work from the start, guests come on demand, and the accounts stay on your own computer.",
@@ -23,7 +23,7 @@
       "bid": "ah001"
     },
     {
-      "kind": "block-section-head",
+      "kind": "section-head",
       "id": "route",
       "title": "How a person gets in",
       "bid": "aa000"
@@ -74,7 +74,7 @@
       "bid": "aa009"
     },
     {
-      "kind": "block-section-head",
+      "kind": "section-head",
       "id": "power",
       "title": "Always on",
       "bid": "q0000"
@@ -85,7 +85,7 @@
       "bid": "q0001"
     },
     {
-      "kind": "block-section-head",
+      "kind": "section-head",
       "id": "guests",
       "title": "Guests and two ready providers",
       "bid": "q0002"
@@ -101,7 +101,7 @@
       "bid": "q0004"
     },
     {
-      "kind": "block-section-head",
+      "kind": "section-head",
       "id": "solves",
       "title": "What changes for you",
       "bid": "ab000"
@@ -133,7 +133,7 @@
       "bid": "ab001"
     },
     {
-      "kind": "block-section-head",
+      "kind": "section-head",
       "id": "turn-on",
       "title": "How to start",
       "bid": "ac000"
@@ -153,7 +153,7 @@
       "bid": "ac002"
     },
     {
-      "kind": "block-section-head",
+      "kind": "section-head",
       "id": "connect",
       "title": "Ask who came",
       "bid": "ad000"
@@ -174,7 +174,7 @@
       "bid": "ad003"
     },
     {
-      "kind": "block-section-head",
+      "kind": "section-head",
       "id": "hood",
       "title": "Under the hood",
       "bid": "ae000"
@@ -214,7 +214,7 @@
       "bid": "ae001"
     },
     {
-      "kind": "block-section-head",
+      "kind": "section-head",
       "id": "more",
       "title": "Change it early",
       "bid": "af000"
@@ -225,7 +225,7 @@
       "bid": "af001"
     },
     {
-      "kind": "block-section-head",
+      "kind": "section-head",
       "id": "builder",
       "title": "Your own builder comes with it",
       "bid": "q0005"
@@ -250,7 +250,7 @@
       "bid": "q0008"
     },
     {
-      "kind": "block-section-head",
+      "kind": "section-head",
       "id": "credits",
       "title": "Open source",
       "bid": "ag000"
@@ -261,13 +261,13 @@
       "bid": "ag001"
     },
     {
-      "kind": "block-section-head",
+      "kind": "section-head",
       "id": "faq",
       "title": "Questions and answers",
       "bid": "q0009"
     },
     {
-      "kind": "block-faq",
+      "kind": "section-faq",
       "title": "Questions and answers",
       "items": [
         {

@@ -3,9 +3,9 @@ import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { H1, H2, H3, Lead, P, Small } from "@/components/ui/typography"
-import { inline } from "@/lib/blocks/inline"
-import { renderBlocks } from "@/lib/content/blocks/registry"
-import type { Block } from "@/lib/content/blocks/types"
+import { inline } from "@/lib/content/inline"
+import { renderPage } from "@/components/sections/page-body"
+import type { PageItem } from "@/lib/content/page-items"
 import { TEXT_SET } from "@/lib/content/text-set"
 import { cn } from "@/lib/utils"
 import { landing, type Hero, type Section } from "./words"
@@ -13,15 +13,15 @@ import { BuilderFigure } from "./builder-figure.client"
 
 // ГЛАВНАЯ ЭЛЕМЕНТА — ЛЕНДИНГ ПО ОБРАЗЦУ STRIPE (узел, шаг 660): служба входа узла. Владелец 2026-11-06: «… в своей главной странице
 // … стиль и дизайн как у новых таких как страйп, глубинная память. Тексты … с помощью навыка humanizer». Устройство — виджет главной
-// объектного хранилища (650-4) под своим именем: страница рисует себя из своих блоков данных (`words.ts`); раздел —
-// `block-section-head` и блоки до следующего, вид раздела выбирается по его `id`, незнакомый `id` — общим видом. Вид — токены
+// объектного хранилища (650-4) под своим именем: страница рисует себя из своих частей данных (`words.ts`); раздел —
+// `section-head` и части до следующего, вид раздела выбирается по его `id`, незнакомый `id` — общим видом. Вид — токены
 // «Дизайна», shadcn и типографика. Утверждения страницы — только о построенном, сверены с README элемента.
 
 // Пересечение, а не `Extract`: у `text-p | text-lead | text-small | text-code` один член объединения на четыре вида, и `Extract`
 // по одному виду дал бы `never`.
-type Of<K extends Block["kind"]> = Block & { kind: K }
-const first = <K extends Block["kind"]>(s: Section, kind: K) => s.blocks.find((b): b is Of<K> => b.kind === kind)
-const all = <K extends Block["kind"]>(s: Section, kind: K) => s.blocks.filter((b): b is Of<K> => b.kind === kind)
+type Of<K extends PageItem["kind"]> = PageItem & { kind: K }
+const first = <K extends PageItem["kind"]>(s: Section, kind: K) => s.body.find((b): b is Of<K> => b.kind === kind)
+const all = <K extends PageItem["kind"]>(s: Section, kind: K) => s.body.filter((b): b is Of<K> => b.kind === kind)
 
 const WRAP = "mx-auto w-full max-w-6xl px-6"
 const ROUTE_ICONS = [Cookie, KeyRound, ShieldCheck, Globe]
@@ -79,7 +79,7 @@ function HeroView({ hero, route }: { hero: Hero; route?: Section }) {
 /** Путь файла: станции — пары `text-h4` (имя) + `text-p` (что делает), примечание — `text-small`. */
 function Route({ section }: { section: Section }) {
   const stations: { name: string; text: string }[] = []
-  for (const b of section.blocks) {
+  for (const b of section.body) {
     if (b.kind === "text-h4") stations.push({ name: b.text, text: "" })
     else if (b.kind === "text-p" && stations.length && !stations[stations.length - 1].text) stations[stations.length - 1].text = b.text
   }
@@ -261,14 +261,14 @@ function More({ section }: { section: Section }) {
 function Generic({ section }: { section: Section }) {
   return (
     <section data-block="x1wzw" id={section.id} className={cn(WRAP, "scroll-mt-20 py-16 md:py-24")}>
-      {/* 662-2: a section of only questions and answers — the block draws its own heading. */}
-      {!(section.blocks.length === 1 && ["block-faq", "block-cards", "block-flow", "block-access-map"].includes(section.blocks[0].kind as string)) && <H2 data-block="efzsv" className="text-balance">{section.title}</H2>}
+      {/* 662-2: a section of only questions and answers — the section draws its own heading. */}
+      {!(section.body.length === 1 && ["section-faq", "section-cards", "section-flow", "section-access-map"].includes(section.body[0].kind as string)) && <H2 data-block="efzsv" className="text-balance">{section.title}</H2>}
       <div data-block="oaxlf" className="mt-6 flex max-w-[70ch] flex-col gap-4">
-        {section.blocks.map((b, i) => {
+        {section.body.map((b, i) => {
           const Render = TEXT_SET[b.kind]
-          // 662-2: a catalogue block (questions and answers, cards) is drawn by the block registry, as on the graph's landing.
-          if (Render) return <Render key={i} blockKey={`${section.id}-${i}`} {...b} />
-          return <div data-block="e8bpq" key={i} className="min-w-0">{renderBlocks([b], `${section.id}-${i}`)}</div>
+          // 662-2: a section of the set (questions and answers, cards) is drawn by the set, as on the graph's landing.
+          if (Render) return <Render key={i} itemKey={`${section.id}-${i}`} {...b} />
+          return <div data-block="e8bpq" key={i} className="min-w-0">{renderPage([b], `${section.id}-${i}`)}</div>
         })}
       </div>
     </section>
@@ -277,11 +277,11 @@ function Generic({ section }: { section: Section }) {
 
 // ── 662-7: секции на всю ширину ─────────────────────────────────────────────────────────────────────────────────────────────
 const isRu = (t: string) => /[А-Яа-яЁё]/.test(t)
-const textsOf = (section: Section) => section.blocks.filter((b) => b.kind === "text-p") as unknown as { text: string }[]
+const textsOf = (section: Section) => section.body.filter((b) => b.kind === "text-p") as unknown as { text: string }[]
 
 /** Свой строитель: слова слева, справа фигурка Claude — собирается из частей, разворачивается и подпрыгивает, когда секция в фокусе. */
 function BuilderWide({ section }: { section: Section }) {
-  const list = section.blocks.find((b) => b.kind === "text-list") as unknown as { items: string[] } | undefined
+  const list = section.body.find((b) => b.kind === "text-list") as unknown as { items: string[] } | undefined
   return (
     <section data-block="sdvcy" id={section.id} className="scroll-mt-20 border-y border-border bg-muted/40">
       <div data-block="z99al" className={cn(WRAP, "grid items-center gap-10 py-16 md:grid-cols-2 md:gap-14 md:py-24")}>
@@ -300,12 +300,12 @@ function BuilderWide({ section }: { section: Section }) {
   )
 }
 
-type FaqBlock = { kind: "block-faq"; title: string; items: { q: string; a: string }[] }
+type FaqBlock = { kind: "section-faq"; title: string; items: { q: string; a: string }[] }
 const plainText = (t: string) => t.replace(/\*\*([^*]+)\*\*/g, "$1").replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
 
-/** Вопросы и ответы: две колонки на всю ширину; разметка FAQPage для поисковиков — как у блока каталога. */
+/** Вопросы и ответы: две колонки на всю ширину; разметка FAQPage для поисковиков — как у секции набора. */
 function FaqWide({ section }: { section: Section }) {
-  const faq = (section.blocks as unknown as FaqBlock[]).find((b) => b.kind === "block-faq")
+  const faq = (section.body as unknown as FaqBlock[]).find((b) => b.kind === "section-faq")
   if (!faq) return null
   const schema = { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.items.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: plainText(f.a) } })) }
   return (
