@@ -1,0 +1,40 @@
+{
+  "en": {
+    "noKey": "The OpenAI key is not added yet — add it in the node's settings.",
+    "badKey": "OpenAI did not accept the key — it is wrong, revoked or belongs to another organization. Check it or create a new one.",
+    "ipBlocked": "OpenAI refused this computer's IP address — add it to the IP allowlist of your organization or project.",
+    "region": "OpenAI does not serve the country or region this computer calls from.",
+    "noFunds": "The OpenAI account has no credits left — top up the balance; waiting will not help.",
+    "spendLimit": "The spend limit you set at OpenAI is reached — raise or remove it.",
+    "usageLimit": "Your organization reached the usage limit OpenAI assigned — request a higher limit.",
+    "rateLimit": "Too many requests to OpenAI at once — wait a minute and try again.",
+    "overloaded": "The model is overloaded at OpenAI right now — try again in a minute.",
+    "server": "OpenAI had an error on its side — try again in a minute.",
+    "notFound": "OpenAI does not know the model this node asked for — choose another model in the settings.",
+    "forbidden": "The key has no access to this model or service — check the key's permissions at OpenAI.",
+    "badRequest": "OpenAI refused the request itself — the node's log has OpenAI's own words.",
+    "unreachable": "The node could not reach OpenAI — check the internet connection of this computer.",
+    "timeout": "OpenAI did not answer in time — try again.",
+    "upstream": "OpenAI answered with an error — try again; the node's log has OpenAI's own words.",
+    "open": "Open at OpenAI"
+  },
+  "ru": {
+    "noKey": "Ключ OpenAI ещё не добавлен — добавьте его в настройках узла.",
+    "badKey": "OpenAI не принял ключ — он неверный, отозван или принадлежит другой организации. Проверьте его или создайте новый.",
+    "ipBlocked": "OpenAI отклонил IP-адрес этого компьютера — добавьте его в список разрешённых адресов организации или проекта.",
+    "region": "OpenAI не обслуживает страну или регион, откуда звонит этот компьютер.",
+    "noFunds": "На счёте OpenAI закончились деньги — пополните баланс; ожидание не поможет.",
+    "spendLimit": "Достигнут лимит расходов, который вы поставили в OpenAI, — поднимите или снимите его.",
+    "usageLimit": "Организация упёрлась в лимит, назначенный OpenAI, — запросите лимит выше.",
+    "rateLimit": "Слишком много запросов к OpenAI сразу — подождите минуту и повторите.",
+    "overloaded": "Модель OpenAI сейчас перегружена — повторите через минуту.",
+    "server": "Ошибка на стороне OpenAI — повторите через минуту.",
+    "notFound": "OpenAI не знает модель, которую попросил узел, — выберите другую модель в настройках.",
+    "forbidden": "У ключа нет доступа к этой модели или службе — проверьте права ключа в OpenAI.",
+    "badRequest": "OpenAI отклонил сам запрос — его собственные слова в журнале узла.",
+    "unreachable": "Узел не смог достучаться до OpenAI — проверьте интернет на этом компьютере.",
+    "timeout": "OpenAI не ответил вовремя — повторите.",
+    "upstream": "OpenAI ответил ошибкой — повторите; его собственные слова в журнале узла.",
+    "open": "Открыть в OpenAI"
+  }
+}

@@ -79,7 +79,7 @@ values the core shows on its node-state indicator and its «Dashboard → Projec
 | Group · field | Source | Open or node-only |
 |---|---|---|
 | `skills` | `.claude/skills/*/SKILL.md` whose description starts with «Work skill» — only this element's own working skills | open |
-| `tools` | `_tools/TOOLS.json` (generated from `_tools/tool-*/tool.json`) — names only, no descriptions: an agent choosing between elements sees how rich each one's tools are | open |
+| `tools` | `_tools/TOOLS.json` (generated from `_tools/*/tool.json`; absent while the element has no tools) — names only, no descriptions: an agent choosing between elements sees how rich each one's tools are | open |
 | `addresses.internet` | own domain, else `<address>.<zone>` | open |
 | `addresses.ownDomain` | `SERVICE_DATA_DIR/domain.json`, else `""` | open |
 | `addresses.project` | the node's zone (`NODE_DOMAIN_FILE`) | open |

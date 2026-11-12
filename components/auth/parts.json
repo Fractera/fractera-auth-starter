@@ -1,0 +1,51 @@
+{
+  "_": "Cards of the reusable parts of this folder (node step 725-5). One card per part; the map is lib/parts/PARTS.json.",
+  "parts": [
+    {
+      "id": "sign-in-notice",
+      "kind": "composite",
+      "path": "components/auth/sign-in-notice.client.tsx",
+      "export": "SignInNotice",
+      "what": {
+        "en": "The green or red notice «you are signed in as …» that greets a person where they arrive after the sign-in service.",
+        "ru": "Зелёная или красная плашка «вы вошли как …», которая встречает человека там, куда он пришёл после службы входа."
+      },
+      "how": "Mount <SignInNotice /> once in a layout with the SIGN_IN_TOASTER; its words come from sign-in-notice.i18n on the server.",
+      "words": {
+        "en": [
+          "signed in notice",
+          "role banner after login",
+          "login toast"
+        ],
+        "ru": [
+          "плашка входа",
+          "вы вошли",
+          "уведомление о роли"
+        ]
+      }
+    },
+    {
+      "id": "access-gate",
+      "kind": "composite",
+      "path": "components/auth/access-gate.client.tsx",
+      "export": "AccessGate, AccessChecking",
+      "what": {
+        "en": "The one door of the protected layer: asks who the visitor is and shows the page, a sign-in invitation or a refusal — honest signage, the real check is the API door.",
+        "ru": "Единственная дверь защищённого слоя: спрашивает, кто посетитель, и показывает страницу, приглашение войти или отказ — честная вывеска, настоящая проверка — у двери API."
+      },
+      "how": "Wrap a protected page's island in <AccessGate roles lang>.",
+      "words": {
+        "en": [
+          "access gate",
+          "protected page",
+          "role check"
+        ],
+        "ru": [
+          "доступ по роли",
+          "защищённая страница",
+          "вход обязателен"
+        ]
+      }
+    }
+  ]
+}

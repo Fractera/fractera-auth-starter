@@ -48,7 +48,7 @@ A second route needs the same widget? Then it is no longer one route's — make 
 
 - **shadcn primitives** (`components/ui`: `Button`, `Tabs`, `Table`, `Card`, `Dialog`…) and **typography**
   (`components/ui/typography`) — the material of every widget. No own styles: the look comes from the design tokens.
-- **A tool** (`_tools/tool-<name>/`, skill `use-tools`) when the widget needs that capability: voice, image crop, a chat.
+- **A tool** (`_tools/` — taken from the core with `npm run tool:take` or born here as `tool-<name>`, skill `use-tools`) when the widget needs that capability: voice, image crop, a chat.
 - **A section** only whole and unchanged (an FAQ under the table) — never as a part of the widget's own
   layout: a section carries its own width and spacing on the page and fights the widget.
 - **Words** in its own `*.i18n.ts` (`en` and `ru` at least). The server picks the language and passes the strings as props:

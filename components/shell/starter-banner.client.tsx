@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { TriangleAlert } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
 import type { StarterBannerStrings } from './starter-banner.i18n'
+
+// 587-2 (владелец 2026-10-24, только у root): «add [v] Don't show again-> fix in localstorage». Отметка живёт в браузере человека
+// (`localStorage`, чтение и запись в try/catch: приватное окно или запрет хранилища — баннер просто показывается).
+const HIDE_KEY = 'fractera:starter-banner:hidden'
 
 // ПОЛОСА-ПОДСКАЗКА (шаг 38-1, 2026-08-29) — во всю ширину экрана, выезжает из-под
 // шапки при прокрутке.
@@ -60,6 +66,7 @@ export function StarterBanner({
   inline = false,
   href,
   dropOnLoad = false,
+  dismissible = false,
 }: {
   strings: StarterBannerStrings
   lang: string
@@ -78,11 +85,19 @@ export function StarterBanner({
    * прокручивать нечего, и полоса, ждущая 300 px прокрутки, не появилась бы никогда.
    */
   dropOnLoad?: boolean
+  /** 587-2: флажок «Больше не показывать»; отметка — в `localStorage`. */
+  dismissible?: boolean
 }) {
   const [shown, setShown] = useState(false)
+  const [hidden, setHidden] = useState(false)
 
   useEffect(() => {
     if (inline) return
+    if (dismissible) {
+      let off = false
+      try { off = window.localStorage.getItem(HIDE_KEY) === '1' } catch { /* хранилище недоступно — показываем */ }
+      if (off) { setHidden(true); return }
+    }
     if (dropOnLoad) {
       const id = requestAnimationFrame(() => setShown(true))
       return () => cancelAnimationFrame(id)
@@ -91,7 +106,13 @@ export function StarterBanner({
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
-  }, [inline, dropOnLoad])
+  }, [inline, dropOnLoad, dismissible])
+
+  function hideForGood() {
+    try { window.localStorage.setItem(HIDE_KEY, '1') } catch { /* не запомнилось — скрываем хотя бы сейчас */ }
+    setHidden(true)
+    setShown(false)
+  }
 
   // Адрес страницы, где включают подписку агента-программиста. Он внутренний,
   // поэтому известен всегда и не зависит ни от настроек, ни от домена.
@@ -102,9 +123,9 @@ export function StarterBanner({
       // Разметка отдаётся сервером ВСЕГДА, а прячется классом: полоса, которой
       // нет в HTML, не может выехать плавно — она появляется рывком после
       // гидратации.
-      data-starter-banner
+      data-starter-banner={hidden ? 'hidden' : ''}
       role="status"
-      aria-hidden={!inline && !shown}
+      aria-hidden={!inline && (!shown || hidden)}
       className={
         inline
           ? // В потоке: та же заливка и тот же тон, но со скруглением — полоса во
@@ -114,7 +135,7 @@ export function StarterBanner({
               'fixed inset-x-0 top-14 z-30 border-b border-tone-access/40',
               'bg-tone-access/15 backdrop-blur-sm',
               'transition-all duration-300 ease-out',
-              shown ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-full opacity-0',
+              shown && !hidden ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-full opacity-0',
             ].join(' ')
       }
     >
@@ -129,6 +150,12 @@ export function StarterBanner({
         </a>
         {strings.tail ? (
           <span className="text-sm leading-relaxed text-foreground">{strings.tail}</span>
+        ) : null}
+        {dismissible && strings.dontShow ? (
+          <Label className="ml-2 flex cursor-pointer items-center gap-1.5 text-sm font-normal text-muted-foreground" data-starter-banner-dismiss>
+            <Checkbox onCheckedChange={(v) => { if (v) hideForGood() }} aria-label={strings.dontShow} className="border-foreground/50 bg-background" />
+            <span>{strings.dontShow}</span>
+          </Label>
         ) : null}
       </div>
     </div>

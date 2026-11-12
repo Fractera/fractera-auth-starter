@@ -1,0 +1,791 @@
+{
+  "_": "Cards of the primitives of components/ui — one owner per kind (node step 725-5). A new primitive gets its card here.",
+  "parts": [
+    {
+      "id": "ui-accordion",
+      "kind": "primitive",
+      "path": "components/ui/accordion.tsx",
+      "export": "Accordion, AccordionItem, AccordionTrigger, AccordionContent",
+      "what": {
+        "en": "Collapsible bands in a panel — several items, one or many open; the «what is it» note above a list.",
+        "ru": "Раскрывающиеся полосы в панели — несколько пунктов, открыт один или несколько; пояснение «что это» над списком."
+      },
+      "how": "import { Accordion } from \"@/components/ui/accordion\" — one owner per kind.",
+      "words": {
+        "en": [
+          "accordion",
+          "expandable",
+          "collapsible list"
+        ],
+        "ru": [
+          "аккордеон",
+          "раскрывающийся список",
+          "свернуть развернуть"
+        ]
+      }
+    },
+    {
+      "id": "ui-badge",
+      "kind": "primitive",
+      "path": "components/ui/badge.tsx",
+      "export": "Badge",
+      "what": {
+        "en": "A small label: a state, a role, a count.",
+        "ru": "Маленькая метка: состояние, роль, число."
+      },
+      "how": "import { Badge } from \"@/components/ui/badge\" — one owner per kind.",
+      "words": {
+        "en": [
+          "badge",
+          "tag",
+          "label chip"
+        ],
+        "ru": [
+          "бейдж",
+          "метка",
+          "ярлык"
+        ]
+      }
+    },
+    {
+      "id": "ui-button-group",
+      "kind": "primitive",
+      "path": "components/ui/button-group.tsx",
+      "export": "ButtonGroup",
+      "what": {
+        "en": "Buttons joined into one group, e.g. a segmented choice.",
+        "ru": "Кнопки, собранные в одну группу, например выбор из сегментов."
+      },
+      "how": "import { ButtonGroup } from \"@/components/ui/button-group\" — one owner per kind.",
+      "words": {
+        "en": [
+          "button group",
+          "segmented control"
+        ],
+        "ru": [
+          "группа кнопок",
+          "сегменты"
+        ]
+      }
+    },
+    {
+      "id": "ui-button",
+      "kind": "primitive",
+      "path": "components/ui/button.tsx",
+      "export": "Button",
+      "what": {
+        "en": "The one button of the product: variants default, outline, secondary, ghost, destructive, link; sizes including icon.",
+        "ru": "Единственная кнопка продукта: варианты default, outline, secondary, ghost, destructive, link; размеры, включая значок."
+      },
+      "how": "import { Button } from \"@/components/ui/button\" — one owner per kind.",
+      "words": {
+        "en": [
+          "button",
+          "click",
+          "icon button"
+        ],
+        "ru": [
+          "кнопка",
+          "нажать",
+          "кнопка со значком"
+        ]
+      }
+    },
+    {
+      "id": "ui-card",
+      "kind": "primitive",
+      "path": "components/ui/card.tsx",
+      "export": "Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter",
+      "what": {
+        "en": "A card: a framed group with a title, a description, content and actions.",
+        "ru": "Карточка: обрамлённая группа с заголовком, описанием, содержимым и действиями."
+      },
+      "how": "import { Card } from \"@/components/ui/card\" — one owner per kind.",
+      "words": {
+        "en": [
+          "card",
+          "tile",
+          "panel box"
+        ],
+        "ru": [
+          "карточка",
+          "плитка",
+          "панель с заголовком"
+        ]
+      }
+    },
+    {
+      "id": "ui-chart",
+      "kind": "primitive",
+      "path": "components/ui/chart.tsx",
+      "export": "ChartContainer, ChartTooltip, ChartLegend",
+      "what": {
+        "en": "Charts on the theme's tokens (recharts inside).",
+        "ru": "Графики на токенах темы (внутри recharts)."
+      },
+      "how": "import { ChartContainer } from \"@/components/ui/chart\" — one owner per kind.",
+      "words": {
+        "en": [
+          "chart",
+          "graph",
+          "plot"
+        ],
+        "ru": [
+          "график",
+          "диаграмма",
+          "чарт"
+        ]
+      }
+    },
+    {
+      "id": "ui-checkbox",
+      "kind": "primitive",
+      "path": "components/ui/checkbox.tsx",
+      "export": "Checkbox",
+      "what": {
+        "en": "A checkbox — a yes/no choice or one of a list.",
+        "ru": "Флажок — выбор да/нет или один из списка."
+      },
+      "how": "import { Checkbox } from \"@/components/ui/checkbox\" — one owner per kind.",
+      "words": {
+        "en": [
+          "checkbox",
+          "tick box"
+        ],
+        "ru": [
+          "чекбокс",
+          "флажок",
+          "галочка"
+        ]
+      }
+    },
+    {
+      "id": "ui-collapsible",
+      "kind": "primitive",
+      "path": "components/ui/collapsible.tsx",
+      "export": "Collapsible, CollapsibleTrigger, CollapsibleContent",
+      "what": {
+        "en": "One part that opens and closes («more», details).",
+        "ru": "Одна часть, которая раскрывается и сворачивается («подробнее», детали)."
+      },
+      "how": "import { Collapsible } from \"@/components/ui/collapsible\" — one owner per kind.",
+      "words": {
+        "en": [
+          "collapsible",
+          "show more",
+          "details"
+        ],
+        "ru": [
+          "свернуть",
+          "подробнее",
+          "раскрыть"
+        ]
+      }
+    },
+    {
+      "id": "ui-command",
+      "kind": "primitive",
+      "path": "components/ui/command.tsx",
+      "export": "Command, CommandInput, CommandList, CommandItem",
+      "what": {
+        "en": "A searchable list with arrow keys (cmdk) — with Popover it is the combobox under a field.",
+        "ru": "Список с поиском и стрелками (cmdk); вместе с Popover — выпадающий список под полем."
+      },
+      "how": "import { Command } from \"@/components/ui/command\" — one owner per kind.",
+      "words": {
+        "en": [
+          "combobox",
+          "command palette",
+          "search list",
+          "autocomplete"
+        ],
+        "ru": [
+          "выпадающий список",
+          "поиск с подсказками",
+          "автодополнение"
+        ]
+      }
+    },
+    {
+      "id": "ui-dialog",
+      "kind": "primitive",
+      "path": "components/ui/dialog.tsx",
+      "export": "Dialog",
+      "what": {
+        "en": "The shadcn dialog primitive — NOT used directly: every modal is AppDialog.",
+        "ru": "Примитив диалога shadcn — напрямую НЕ используется: каждое модальное окно — AppDialog."
+      },
+      "how": "import { Dialog } from \"@/components/ui/dialog\" — one owner per kind.",
+      "words": {
+        "en": [
+          "dialog primitive",
+          "modal primitive"
+        ],
+        "ru": [
+          "примитив диалога",
+          "модальный примитив"
+        ]
+      },
+      "internal": true
+    },
+    {
+      "id": "ui-dropdown-menu",
+      "kind": "primitive",
+      "path": "components/ui/dropdown-menu.tsx",
+      "export": "DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem",
+      "what": {
+        "en": "A menu that drops from a button: actions, a choice, a switch.",
+        "ru": "Меню, выпадающее от кнопки: действия, выбор, переключатель."
+      },
+      "how": "import { DropdownMenu } from \"@/components/ui/dropdown-menu\" — one owner per kind.",
+      "words": {
+        "en": [
+          "dropdown menu",
+          "context menu",
+          "more actions"
+        ],
+        "ru": [
+          "выпадающее меню",
+          "меню действий",
+          "ещё"
+        ]
+      }
+    },
+    {
+      "id": "ui-empty-state",
+      "kind": "primitive",
+      "path": "components/ui/empty-state.tsx",
+      "export": "EmptyState",
+      "what": {
+        "en": "The empty state of a list or a page: an icon, words and the next action.",
+        "ru": "Пустое состояние списка или страницы: значок, слова и следующее действие."
+      },
+      "how": "import { EmptyState } from \"@/components/ui/empty-state\" — one owner per kind.",
+      "words": {
+        "en": [
+          "empty state",
+          "nothing here"
+        ],
+        "ru": [
+          "пустое состояние",
+          "ничего нет"
+        ]
+      }
+    },
+    {
+      "id": "ui-field",
+      "kind": "primitive",
+      "path": "components/ui/field.tsx",
+      "export": "Field, FieldGroup, FieldLabel, FieldDescription, FieldError",
+      "what": {
+        "en": "A form field with its label, description and error; FieldGroup for a form.",
+        "ru": "Поле формы с подписью, описанием и ошибкой; FieldGroup для формы."
+      },
+      "how": "import { Field } from \"@/components/ui/field\" — one owner per kind.",
+      "words": {
+        "en": [
+          "form field",
+          "field label",
+          "form layout"
+        ],
+        "ru": [
+          "поле формы",
+          "подпись поля",
+          "форма"
+        ]
+      }
+    },
+    {
+      "id": "ui-hover-card",
+      "kind": "primitive",
+      "path": "components/ui/hover-card.tsx",
+      "export": "HoverCard, HoverCardTrigger, HoverCardContent",
+      "what": {
+        "en": "A card that appears on hover — a preview of a link or a person.",
+        "ru": "Карточка при наведении — превью ссылки или человека."
+      },
+      "how": "import { HoverCard } from \"@/components/ui/hover-card\" — one owner per kind.",
+      "words": {
+        "en": [
+          "hover card",
+          "preview on hover"
+        ],
+        "ru": [
+          "карточка при наведении",
+          "превью"
+        ]
+      }
+    },
+    {
+      "id": "ui-input-group",
+      "kind": "primitive",
+      "path": "components/ui/input-group.tsx",
+      "export": "InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton",
+      "what": {
+        "en": "A field with buttons or icons inside it (search with a clear button).",
+        "ru": "Поле с кнопками или значками внутри (поиск с кнопкой очистки)."
+      },
+      "how": "import { InputGroup } from \"@/components/ui/input-group\" — one owner per kind.",
+      "words": {
+        "en": [
+          "input group",
+          "field with button",
+          "search field"
+        ],
+        "ru": [
+          "поле с кнопкой",
+          "поле поиска",
+          "группа ввода"
+        ]
+      }
+    },
+    {
+      "id": "ui-input",
+      "kind": "primitive",
+      "path": "components/ui/input.tsx",
+      "export": "Input",
+      "what": {
+        "en": "A one-line text input (16px — Safari does not zoom).",
+        "ru": "Однострочное поле ввода (16px — Safari не увеличивает страницу)."
+      },
+      "how": "import { Input } from \"@/components/ui/input\" — one owner per kind.",
+      "words": {
+        "en": [
+          "input",
+          "text field",
+          "one line"
+        ],
+        "ru": [
+          "поле ввода",
+          "текстовое поле",
+          "строка"
+        ]
+      }
+    },
+    {
+      "id": "ui-label",
+      "kind": "primitive",
+      "path": "components/ui/label.tsx",
+      "export": "Label",
+      "what": {
+        "en": "The label of a control.",
+        "ru": "Подпись элемента управления."
+      },
+      "how": "import { Label } from \"@/components/ui/label\" — one owner per kind.",
+      "words": {
+        "en": [
+          "label",
+          "caption"
+        ],
+        "ru": [
+          "подпись",
+          "метка поля"
+        ]
+      }
+    },
+    {
+      "id": "ui-native-select",
+      "kind": "primitive",
+      "path": "components/ui/native-select.tsx",
+      "export": "NativeSelect, NativeSelectOption, NativeSelectOptGroup",
+      "what": {
+        "en": "The browser's own select styled by the theme — works without JavaScript.",
+        "ru": "Собственный список браузера в стиле темы — работает без JavaScript."
+      },
+      "how": "import { NativeSelect } from \"@/components/ui/native-select\" — one owner per kind.",
+      "words": {
+        "en": [
+          "native select",
+          "select without js"
+        ],
+        "ru": [
+          "нативный список",
+          "выбор без js"
+        ]
+      }
+    },
+    {
+      "id": "ui-navigation-menu",
+      "kind": "primitive",
+      "path": "components/ui/navigation-menu.tsx",
+      "export": "NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent",
+      "what": {
+        "en": "The site navigation with dropdown panels (the shell's mega menu).",
+        "ru": "Навигация сайта с выпадающими панелями (мега-меню оболочки)."
+      },
+      "how": "import { NavigationMenu } from \"@/components/ui/navigation-menu\" — one owner per kind.",
+      "words": {
+        "en": [
+          "navigation menu",
+          "mega menu"
+        ],
+        "ru": [
+          "меню навигации",
+          "мега-меню"
+        ]
+      }
+    },
+    {
+      "id": "ui-pagination",
+      "kind": "primitive",
+      "path": "components/ui/pagination.tsx",
+      "export": "Pagination, PaginationContent, PaginationItem, PaginationLink",
+      "what": {
+        "en": "Page numbers and back/next — inside TableTools for lists.",
+        "ru": "Номера страниц и назад/вперёд — для списков внутри TableTools."
+      },
+      "how": "import { Pagination } from \"@/components/ui/pagination\" — one owner per kind.",
+      "words": {
+        "en": [
+          "pagination",
+          "pages",
+          "next page"
+        ],
+        "ru": [
+          "пагинация",
+          "страницы",
+          "следующая страница"
+        ]
+      }
+    },
+    {
+      "id": "ui-popover",
+      "kind": "primitive",
+      "path": "components/ui/popover.tsx",
+      "export": "Popover, PopoverTrigger, PopoverContent",
+      "what": {
+        "en": "A floating panel anchored to a trigger — never a hand-built absolute div.",
+        "ru": "Плавающая панель у кнопки — никогда не самодельный absolute div."
+      },
+      "how": "import { Popover } from \"@/components/ui/popover\" — one owner per kind.",
+      "words": {
+        "en": [
+          "popover",
+          "floating panel",
+          "dropdown panel"
+        ],
+        "ru": [
+          "всплывающая панель",
+          "поповер",
+          "плавающая панель"
+        ]
+      }
+    },
+    {
+      "id": "ui-scroll-area",
+      "kind": "primitive",
+      "path": "components/ui/scroll-area.tsx",
+      "export": "ScrollArea, ScrollBar",
+      "what": {
+        "en": "A scrolling area with the theme's scrollbar.",
+        "ru": "Прокручиваемая область со скроллбаром темы."
+      },
+      "how": "import { ScrollArea } from \"@/components/ui/scroll-area\" — one owner per kind.",
+      "words": {
+        "en": [
+          "scroll area",
+          "scrollable"
+        ],
+        "ru": [
+          "прокрутка",
+          "область прокрутки"
+        ]
+      }
+    },
+    {
+      "id": "ui-select",
+      "kind": "primitive",
+      "path": "components/ui/select.tsx",
+      "export": "Select, SelectTrigger, SelectContent, SelectItem, SelectValue",
+      "what": {
+        "en": "A styled select — one of several values.",
+        "ru": "Стилизованный список выбора — одно из нескольких значений."
+      },
+      "how": "import { Select } from \"@/components/ui/select\" — one owner per kind.",
+      "words": {
+        "en": [
+          "select",
+          "choose one",
+          "dropdown select"
+        ],
+        "ru": [
+          "список выбора",
+          "выбрать одно",
+          "селект"
+        ]
+      }
+    },
+    {
+      "id": "ui-separator",
+      "kind": "primitive",
+      "path": "components/ui/separator.tsx",
+      "export": "Separator",
+      "what": {
+        "en": "A thin line between groups.",
+        "ru": "Тонкая линия между группами."
+      },
+      "how": "import { Separator } from \"@/components/ui/separator\" — one owner per kind.",
+      "words": {
+        "en": [
+          "separator",
+          "divider",
+          "line"
+        ],
+        "ru": [
+          "разделитель",
+          "линия"
+        ]
+      }
+    },
+    {
+      "id": "ui-sheet",
+      "kind": "primitive",
+      "path": "components/ui/sheet.tsx",
+      "export": "Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle",
+      "what": {
+        "en": "A side panel sliding from an edge — drawers, a deal's details, the terminal drawer.",
+        "ru": "Боковая панель, выезжающая с края — ящики, подробности сделки, ящик терминала."
+      },
+      "how": "import { Sheet } from \"@/components/ui/sheet\" — one owner per kind.",
+      "words": {
+        "en": [
+          "sheet",
+          "side panel",
+          "drawer"
+        ],
+        "ru": [
+          "боковая панель",
+          "ящик",
+          "выезжающая панель"
+        ]
+      }
+    },
+    {
+      "id": "ui-skeleton",
+      "kind": "primitive",
+      "path": "components/ui/skeleton.tsx",
+      "export": "Skeleton",
+      "what": {
+        "en": "A grey placeholder while something loads.",
+        "ru": "Серая заглушка, пока что-то грузится."
+      },
+      "how": "import { Skeleton } from \"@/components/ui/skeleton\" — one owner per kind.",
+      "words": {
+        "en": [
+          "skeleton",
+          "loading placeholder"
+        ],
+        "ru": [
+          "скелетон",
+          "заглушка загрузки"
+        ]
+      }
+    },
+    {
+      "id": "ui-spinner",
+      "kind": "primitive",
+      "path": "components/ui/spinner.tsx",
+      "export": "Spinner",
+      "what": {
+        "en": "The spinning sign of a running action.",
+        "ru": "Крутящийся знак идущего действия."
+      },
+      "how": "import { Spinner } from \"@/components/ui/spinner\" — one owner per kind.",
+      "words": {
+        "en": [
+          "spinner",
+          "loading"
+        ],
+        "ru": [
+          "спиннер",
+          "загрузка",
+          "крутилка"
+        ]
+      }
+    },
+    {
+      "id": "ui-switch",
+      "kind": "primitive",
+      "path": "components/ui/switch.tsx",
+      "export": "Switch",
+      "what": {
+        "en": "An on/off switch. (shadcn/ui)",
+        "ru": "Переключатель вкл/выкл."
+      },
+      "how": "import { Switch } from \"@/components/ui/switch\" — one owner per kind.",
+      "words": {
+        "en": [
+          "switch",
+          "toggle",
+          "on off"
+        ],
+        "ru": [
+          "переключатель",
+          "тумблер",
+          "вкл выкл"
+        ]
+      }
+    },
+    {
+      "id": "ui-table",
+      "kind": "primitive",
+      "path": "components/ui/table.tsx",
+      "export": "Table, TableHeader, TableBody, TableRow, TableHead, TableCell",
+      "what": {
+        "en": "The table primitive — for a list with search and pages take TableTools.",
+        "ru": "Примитив таблицы — для списка с поиском и страницами берите TableTools."
+      },
+      "how": "import { Table } from \"@/components/ui/table\" — one owner per kind.",
+      "words": {
+        "en": [
+          "table",
+          "rows",
+          "grid"
+        ],
+        "ru": [
+          "таблица",
+          "строки",
+          "сетка"
+        ]
+      }
+    },
+    {
+      "id": "ui-textarea",
+      "kind": "primitive",
+      "path": "components/ui/textarea.tsx",
+      "export": "Textarea",
+      "what": {
+        "en": "A multi-line text area; with voice — VoiceTextarea.",
+        "ru": "Многострочная область текста; с голосом — VoiceTextarea."
+      },
+      "how": "import { Textarea } from \"@/components/ui/textarea\" — one owner per kind.",
+      "words": {
+        "en": [
+          "textarea",
+          "multi line text"
+        ],
+        "ru": [
+          "область текста",
+          "многострочное поле"
+        ]
+      }
+    },
+    {
+      "id": "ui-tooltip",
+      "kind": "primitive",
+      "path": "components/ui/tooltip.tsx",
+      "export": "Tooltip, TooltipTrigger, TooltipContent",
+      "what": {
+        "en": "A hint on hover or focus — never title= on a button.",
+        "ru": "Подсказка при наведении или фокусе — никогда не title= на кнопке."
+      },
+      "how": "import { Tooltip } from \"@/components/ui/tooltip\" — one owner per kind.",
+      "words": {
+        "en": [
+          "tooltip",
+          "hint",
+          "hover hint"
+        ],
+        "ru": [
+          "подсказка",
+          "тултип",
+          "всплывающая подсказка"
+        ]
+      }
+    },
+    {
+      "id": "ui-typography",
+      "kind": "primitive",
+      "path": "components/ui/typography.tsx",
+      "export": "H1, H2, H3, H4, H5, P, Lead, Metric, …",
+      "what": {
+        "en": "The text primitives: headings and paragraphs with the project's scale — never a hand-classed heading.",
+        "ru": "Примитивы текста: заголовки и абзацы со шкалой проекта — никогда не заголовок со своими классами."
+      },
+      "how": "import { H1 } from \"@/components/ui/typography\" — one owner per kind.",
+      "words": {
+        "en": [
+          "heading",
+          "title",
+          "paragraph",
+          "typography"
+        ],
+        "ru": [
+          "заголовок",
+          "абзац",
+          "типографика",
+          "текст"
+        ]
+      }
+    },
+    {
+      "id": "ui-alert",
+      "kind": "primitive",
+      "path": "components/ui/alert.tsx",
+      "export": "Alert, AlertTitle, AlertDescription",
+      "what": {
+        "en": "A callout box: an informational, warning or error message inside the page.",
+        "ru": "Плашка сообщения внутри страницы: сведение, предупреждение или ошибка."
+      },
+      "how": "import { Alert } from \"@/components/ui/alert\" — one owner per kind.",
+      "words": {
+        "en": [
+          "alert",
+          "callout",
+          "warning box"
+        ],
+        "ru": [
+          "плашка",
+          "предупреждение",
+          "сообщение об ошибке"
+        ]
+      }
+    },
+    {
+      "id": "ui-avatar",
+      "kind": "primitive",
+      "path": "components/ui/avatar.tsx",
+      "export": "Avatar, AvatarImage, AvatarFallback",
+      "what": {
+        "en": "A person's round picture with initials as the fallback.",
+        "ru": "Круглая картинка человека с инициалами, если картинки нет."
+      },
+      "how": "import { Avatar } from \"@/components/ui/avatar\" — one owner per kind.",
+      "words": {
+        "en": [
+          "avatar",
+          "profile picture",
+          "user photo"
+        ],
+        "ru": [
+          "аватар",
+          "фото профиля",
+          "картинка пользователя"
+        ]
+      }
+    },
+    {
+      "id": "ui-slider",
+      "kind": "primitive",
+      "path": "components/ui/slider.tsx",
+      "export": "Slider",
+      "what": {
+        "en": "A slider to pick a number or a range by dragging.",
+        "ru": "Ползунок: выбрать число или диапазон перетаскиванием."
+      },
+      "how": "import { Slider } from \"@/components/ui/slider\" — one owner per kind.",
+      "words": {
+        "en": [
+          "slider",
+          "range",
+          "drag value"
+        ],
+        "ru": [
+          "ползунок",
+          "слайдер",
+          "диапазон"
+        ]
+      }
+    }
+  ]
+}

@@ -21,9 +21,10 @@ for (const p of problems) {
   failed = true
 }
 
+const { tools } = collect()
 if (!existsSync(TARGET)) {
-  console.error("нет _tools/TOOLS.json — карта не порождена")
-  failed = true
+  // 733-6: ни одного инструмента — карта не нужна; есть инструменты — карта обязана быть.
+  if (tools.length) { console.error("нет _tools/TOOLS.json — карта не порождена"); failed = true }
 } else if (!problems.length) {
   // 🔒 ПЕРЕВОДЫ СТРОК НОРМАЛИЗУЮТСЯ ПЕРЕД СРАВНЕНИЕМ — так же, как у
   // `check-blocks-map.mjs` и `check-config-schemas.mjs`. Два сторожа порождённых

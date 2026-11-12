@@ -23,6 +23,8 @@ export type StarterBannerStrings = {
   linkLabel: string
   /** Хвост фразы после ссылки; может быть пустым. */
   tail: string
+  /** 587-2: подпись флажка «больше не показывать» (только у root). */
+  dontShow?: string
 }
 
 // ── Повод первый: сайт ещё не ваш ───────────────────────────────────────────
@@ -35,12 +37,14 @@ const EN: StarterBannerStrings = {
   lead: 'You are looking at your starter template. Delete its content and create your own:',
   linkLabel: 'start the project',
   tail: '',
+  dontShow: "Don't show again",
 }
 
 const RU: StarterBannerStrings = {
   lead: 'Вы просматриваете ваш стартовый шаблон. Теперь удалите его содержимое и создайте своё:',
   linkLabel: 'запуск проекта',
   tail: '',
+  dontShow: 'Больше не показывать',
 }
 
 // ── Повод второй: у страницы ещё нет текста ─────────────────────────────────

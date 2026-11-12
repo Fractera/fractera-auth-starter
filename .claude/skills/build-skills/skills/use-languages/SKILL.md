@@ -33,8 +33,8 @@ until then.
 
 A translation is one more language file next to the base, in the folder of the route or widget that owns it (CLAUDE.md, «A
 route owns its own»). Until it exists, the page answers in the default language. Never write a text into the code inline and
-never `lang === 'ru' ? … : …`. The person's tools: the dialog `_tools/tool-translations-dialog` (automatic translation with the
-node's OpenAI key, one language at a time) and `npm run i18n:export` → an outside model translates all languages at once →
+never `lang === 'ru' ? … : …`. The person's tools: the core's translations dialog (`parts_find` «translations», taken with
+`npm run tool:take`; automatic translation with the node's OpenAI key, one language at a time) and `npm run i18n:export` → an outside model translates all languages at once →
 `npm run i18n:import` — cheaper than translating prose in your own context.
 
 ## How the element protects itself from search penalties — built, not promised

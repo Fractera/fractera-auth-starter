@@ -1,0 +1,50 @@
+{
+  "_": "Cards of the reusable parts of this folder (node step 725-5). One card per part; the map is lib/parts/PARTS.json.",
+  "parts": [
+    {
+      "id": "messenger-shell",
+      "kind": "composite",
+      "path": "components/messenger/messenger-shell.client.tsx",
+      "export": "MessengerShell",
+      "what": {
+        "en": "The messenger window H2H / H2A of this element, built only from ai-elements: the conversation, messages, the input.",
+        "ru": "Окно мессенджера H2H / H2A этого элемента, только из ai-elements: беседа, сообщения, поле ввода."
+      },
+      "how": "Through conversationRoute of the messenger branch; never a hand chat.",
+      "words": {
+        "en": [
+          "messenger",
+          "chat window",
+          "conversation"
+        ],
+        "ru": [
+          "мессенджер",
+          "окно переписки",
+          "беседа"
+        ]
+      }
+    },
+    {
+      "id": "conversation-route",
+      "kind": "composite",
+      "path": "components/messenger/conversation-route.tsx",
+      "export": "conversationRoute",
+      "what": {
+        "en": "The route of one conversation of the messenger, shared by both branches — a branch only declares its segment and calls it.",
+        "ru": "Маршрут одной беседы мессенджера, общий для обеих веток: ветка только объявляет сегмент и зовёт его."
+      },
+      "how": "export default conversationRoute(…) in the branch's thin route.",
+      "words": {
+        "en": [
+          "conversation route",
+          "messenger route"
+        ],
+        "ru": [
+          "маршрут беседы",
+          "маршрут мессенджера"
+        ]
+      },
+      "internal": true
+    }
+  ]
+}

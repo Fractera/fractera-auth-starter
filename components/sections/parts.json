@@ -1,0 +1,28 @@
+{
+  "_": "Cards of the reusable parts of this folder (node step 725-5). One card per part; the map is lib/parts/PARTS.json.",
+  "parts": [
+    {
+      "id": "page-body",
+      "kind": "composite",
+      "path": "components/sections/page-body.tsx",
+      "export": "PageBody, renderPage",
+      "what": {
+        "en": "The page factory from sections: a page is a list of {kind, …fields}, rendered by this element's own section set; an unknown kind is a loud error.",
+        "ru": "Фабрика страницы из секций: страница — список {kind, …поля}, рисуется своим набором секций элемента; неизвестный вид — громкая ошибка."
+      },
+      "how": "<PageBody sections set lang /> in a page route.",
+      "words": {
+        "en": [
+          "page from sections",
+          "render sections",
+          "page body"
+        ],
+        "ru": [
+          "страница из секций",
+          "собрать страницу",
+          "тело страницы"
+        ]
+      }
+    }
+  ]
+}

@@ -19,7 +19,8 @@ costs nothing until read. Before asking the core how the node works (`ask-core`)
    original.
 2. An AI agent on **their own computer** (never a cloud session — install refuses there with `===CLOUD_REFUSED===`) clones that
    fork, runs `npm install`, `npm run build`, `npm run serve:start`.
-3. The first start installs the node's elements (sign-in, data, settings, design, the root site), starts the autostart and the
+3. The first start installs the node's preinstalled elements (sign-in, data, CONFIG and the other native ones) and the custom element
+   `root`, starts the autostart and the
    watchdog, and puts the panel on a temporary Cloudflare address (`.claude/node-knowledge/temporary-domain.md`).
 
 `scripts/check-origin.mjs` (first step of the build and of the start) asks GitHub whether `origin` is a direct fork of

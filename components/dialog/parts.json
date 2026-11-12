@@ -1,0 +1,33 @@
+{
+  "_": "Cards of the reusable parts of this folder (node step 725-5). One card per part; the map is lib/parts/PARTS.json.",
+  "parts": [
+    {
+      "id": "app-dialog",
+      "kind": "composite",
+      "path": "components/dialog/app-dialog.client.tsx",
+      "export": "AppDialog",
+      "what": {
+        "en": "The ONE modal window of the product: portal, scrim, focus trap, Escape, scroll lock, a scrolling body with the actions always visible.",
+        "ru": "ЕДИНСТВЕННОЕ модальное окно продукта: портал, затемнение, ловушка фокуса, Escape, запрет прокрутки, прокручиваемое тело с видимыми кнопками."
+      },
+      "how": "<AppDialog open onOpenChange title ui={appDialogUi(lang)}>…</AppDialog>; the ui words come from the server (app-dialog.i18n), never imported by value into a client file.",
+      "words": {
+        "en": [
+          "modal",
+          "dialog",
+          "popup window",
+          "confirm window"
+        ],
+        "ru": [
+          "модальное окно",
+          "диалог",
+          "всплывающее окно",
+          "окно подтверждения"
+        ]
+      },
+      "replaces": [
+        "@/components/ui/dialog"
+      ]
+    }
+  ]
+}

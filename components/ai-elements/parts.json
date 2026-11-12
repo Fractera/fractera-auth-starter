@@ -1,0 +1,38 @@
+{
+  "_": "Cards of the reusable parts of this folder (node step 725-5). One card per part; the map is lib/parts/PARTS.json.",
+  "parts": [
+    {
+      "id": "ai-elements",
+      "kind": "composite",
+      "path": "components/ai-elements/conversation.tsx",
+      "export": "Conversation, Message, PromptInput, Attachments, WebPreview",
+      "what": {
+        "en": "The vendored AI Elements family for a conversation with a model: the conversation, messages, the prompt input, attachments, a web preview.",
+        "ru": "Семейство AI Elements для разговора с моделью: разговор, сообщения, ввод запроса, вложения, веб-превью."
+      },
+      "how": "Never directly on a page: the core's chat tool (taken with npm run tool:take) and the messenger window are built on them (skill ai-elements).",
+      "words": {
+        "en": [
+          "chat ui",
+          "conversation",
+          "messages"
+        ],
+        "ru": [
+          "интерфейс чата",
+          "переписка",
+          "сообщения"
+        ]
+      },
+      "also": [
+        "components/ai-elements/attachments.tsx",
+        "components/ai-elements/chain-of-thought.tsx",
+        "components/ai-elements/confirmation.tsx",
+        "components/ai-elements/message.tsx",
+        "components/ai-elements/prompt-input.tsx",
+        "components/ai-elements/shimmer.tsx",
+        "components/ai-elements/task.tsx",
+        "components/ai-elements/tool.tsx"
+      ]
+    }
+  ]
+}

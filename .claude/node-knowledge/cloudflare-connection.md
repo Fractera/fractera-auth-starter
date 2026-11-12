@@ -21,7 +21,8 @@ costs nothing until read. Before asking the core how the node works (`ask-core`)
   `*.trycloudflare.com` address that points at the core's panel.
 - **Later — the person's own domain:** «Domain and hosting → Domain activation» in the core. The domain sits in a free Cloudflare
   account; the page helps the person create a Cloudflare key with exactly the rights needed (the «Node key» card) and connects
-  a named tunnel. Then: the main site at the domain, each element at `<address>.<zone>` (this one too), sign-in at `auth.<zone>`,
+  a named tunnel. Then: the bare domain answers with one element (today the element `root` — an ordinary custom element), each element
+  at `<address>.<zone>` (this one too), sign-in at `auth.<zone>`,
   the panel at `architect.<zone>`; an element may also get a domain of its own on its page.
 - **The copy of public pages** — with the own domain, each address keeps a copy of its public pages in the person's Cloudflare
   Workers: while the computer is off Cloudflare serves it (`.claude/node-knowledge/computer-off.md`). Refreshed only by a person's action: «Accept»,
