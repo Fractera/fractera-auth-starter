@@ -7,12 +7,13 @@ import { auth } from "./auth";
 import { ALL_ROLES } from "./roles";
 import { headers } from "next/headers";
 import { appOfReturn } from "./apps";
+import { claimMatches, claimPending, endClaim } from "./claim";
 
 type RegisterResult =
   | { success: true; roles: string[] }
   | { success: false; error: string };
 
-export async function register(email: string, password: string): Promise<RegisterResult> {
+export async function register(email: string, password: string, code = ""): Promise<RegisterResult> {
   const normalizedEmail = email.trim().toLowerCase();
   const db = getDb();
   // 🔒 554-3: РЕГИСТРАЦИЯ — В ПРИЛОЖЕНИИ, КУДА ЧЕЛОВЕК ВЕРНЁТСЯ. Форма зовёт это действие со страницы
@@ -85,11 +86,15 @@ export async function register(email: string, password: string): Promise<Registe
   // право, и в учётной записи ему делать нечего.
   // 554-3: «первый» — только в узле; первый человек приложения завода — обычный пользователь этого приложения.
   const isFirst = app === "node" && !db.prepare("SELECT id FROM users WHERE app = 'node' LIMIT 1").get();
+  // 739-1: a fresh server waits for its architect's one-time code — without it nobody becomes the first account (`claim.ts`).
+  const claimed = isFirst && claimPending(db);
+  if (claimed && !claimMatches(code)) return { success: false, error: "claim-code" };
   const roles: string[] = isFirst ? ALL_ROLES.filter((r) => r !== "guest") : ["user"];
 
   db.prepare(
     "INSERT INTO users (id, email, nickname, password, roles, provider, app) VALUES (?, ?, ?, ?, ?, ?, ?)"
   ).run(nanoid(), normalizedEmail, nickname, hashedPassword, JSON.stringify(roles), "credentials", app);
+  if (claimed) endClaim();
 
   return { success: true, roles };
 }

@@ -1,6 +1,7 @@
 import type { Adapter, AdapterUser } from "next-auth/adapters";
 import type Database from "better-sqlite3";
 import { nanoid } from "nanoid";
+import { claimPending } from "./claim";
 
 // NextAuth adapter backed by the auth service's own better-sqlite3 database.
 // FES uses @auth/prisma-adapter over Postgres; production auth has no adapter —
@@ -65,6 +66,9 @@ export function SqliteAdapter(db: Database.Database, appOf: () => string = () =>
       // 554-3: первым — архитектором — становится только запись узла; первый человек приложения завода — обычный пользователь.
       const app = appOf();
       const isFirst = app === "node" && !db.prepare("SELECT id FROM users WHERE app = 'node' LIMIT 1").get();
+      // 739-1, D29: while a fresh server waits for its architect's code, Google and the magic link create no first account — only the
+      // register form with the code does (`claim.ts`).
+      if (isFirst && claimPending(db)) throw new Error("claim-pending");
       const roles = isFirst ? ["architect"] : ["user"];
       // Default provider "email": the magic-link path never calls linkAccount,
       // so it keeps this value; OAuth flows overwrite it in linkAccount with the

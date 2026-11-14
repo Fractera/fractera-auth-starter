@@ -10,6 +10,7 @@ import { elementOfHost, isFactory } from "@/lib/auth/app-hosts";
 import { authBaseFromHost, connectedDomainAuthBase, projectsBaseFromHost, publicAuthBaseFor } from "@/lib/auth-base-server";
 import { authUrl as nodeAuthUrl } from "@/lib/microservices/urls";
 import { temporaryAddressPage } from "@/lib/auth/temporary-address.page";
+import { signInClosedFor, signInClosedPage } from "@/lib/auth/sign-in-closed";
 import {
   SUPPORTED_LANGUAGES,
   DEFAULT_LANGUAGE,
@@ -677,7 +678,8 @@ const SESSION_COOKIES = ["__Secure-authjs.session-token", "authjs.session-token"
 const AUTH_PAGES = new Set(["/login", "/register", "/signout", "/guest-login", "/logout"])
 // 559-3: `/api/node-users` — дверь пользователей узла для ядра; стережёт себя сама (ключ архитектора, только петля машины).
 // 580-2: `/api/app-users` — люди одного приложения для его сайта; стережёт себя сама (человек по куке или билету, приложение записи).
-const AUTH_API = ["/api/auth", "/api/session", "/api/user-count", "/api/admin", "/api/node-users", "/api/app-users"]
+// 739-1: `/api/claim` — the architect's one-time code of a fresh server; guards itself (GET says only «pending», POST: the architect's key, loopback).
+const AUTH_API = ["/api/auth", "/api/session", "/api/user-count", "/api/admin", "/api/node-users", "/api/app-users", "/api/claim"]
 // Two template doors live under /api/auth and keep the template gate: the return from the node centre and the guest leave.
 const TEMPLATE_AUTH_API = new Set(["/api/auth/callback", "/api/auth/guest-leave"])
 const LANG_SEGMENT = /^\/([a-z]{2})(\/.*)?$/
@@ -720,6 +722,11 @@ function factoryReturnPage(request: NextRequest): URL | null {
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   const path = request.nextUrl.pathname
+  // 739-2: a public name before the domain is switched on — one honest page, never a redirect to the machine's loopback.
+  if (path !== "/api/health" && signInClosedFor(request.headers.get("x-forwarded-host") || request.headers.get("host") || "", process.env.NEXTAUTH_URL)) {
+    if (path.startsWith("/api/")) return NextResponse.json({ ok: false, error: "sign-in-not-switched-on" }, { status: 503, headers: { "Cache-Control": "no-store" } })
+    return new NextResponse(signInClosedPage(request.headers.get("accept-language")), { status: 503, headers: { "content-type": "text/html; charset=utf-8", "Cache-Control": "no-store" } })
+  }
   if (path.startsWith("/api/")) {
     if (!TEMPLATE_AUTH_API.has(path) && AUTH_API.some((p) => path === p || path.startsWith(p + "/"))) return NextResponse.next()
     return templateProxy(request)

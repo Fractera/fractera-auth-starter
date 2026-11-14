@@ -13,6 +13,7 @@ import { getAuthStrings, detectBrowserLang, DEFAULT_AUTH_LANG, type AuthStrings,
 import { SignedInGate } from "../../_components/signed-in-card.client";
 import { rememberSignedInHere } from "@/lib/auth/device-memory";
 import { FirstAccountWarning } from "./first-account-warning.client";
+import { ClaimCodeField } from "./claim-code-field.client";
 
 export function AccessDeniedModal({ onClose, s }: { onClose: () => void; s: AuthStrings }) {
   return (
@@ -109,6 +110,7 @@ function RegisterForm() {
   const [email, setEmail]               = useState("");
   const [password, setPassword]         = useState("");
   const [confirm, setConfirm]           = useState("");
+  const [code, setCode]                 = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError]               = useState<string | null>(null);
   const [loading, setLoading]           = useState(false);
@@ -127,8 +129,8 @@ function RegisterForm() {
     if (password !== confirm) { setError(s.passwordsNoMatch); return; }
     setLoading(true);
     try {
-      const result = await register(email, password);
-      if (!result.success) { setError(result.error); return; }
+      const result = await register(email, password, code);
+      if (!result.success) { setError(result.error === "claim-code" ? (s.claimRefused ?? getAuthStrings(DEFAULT_AUTH_LANG).claimRefused ?? result.error) : result.error); return; }
 
       const res = await signIn("credentials", { email, password, redirect: false });
       if (res?.error) { setError(s.signInFailedAfterReg); return; }
@@ -211,6 +213,7 @@ function RegisterForm() {
               <Label htmlFor="reg-confirm">{s.confirmPassword}</Label>
               <Input id="reg-confirm" type={showPassword ? "text" : "password"} value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="••••••••" autoComplete="new-password" disabled={loading} required />
             </div>
+            <ClaimCodeField disabled={loading} hint={s.claimCodeHint ?? getAuthStrings(DEFAULT_AUTH_LANG).claimCodeHint ?? ""} label={s.claimCode ?? getAuthStrings(DEFAULT_AUTH_LANG).claimCode ?? ""} onChange={setCode} value={code} />
             {error && <p className="text-xs text-destructive bg-destructive/10 rounded px-2 py-1.5">{error}</p>}
             <Button type="submit" disabled={loading} className="w-full">
               {loading ? <><Loader2 className="size-4 animate-spin" /> {s.creatingAccount}</> : s.createAccount}

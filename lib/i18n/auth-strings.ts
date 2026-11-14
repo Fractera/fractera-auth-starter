@@ -11,6 +11,10 @@
 //   {email} – the address a magic link was sent to  (magicSentBody)
 
 export type AuthStrings = {
+  // 739-1: the architect's one-time code of a fresh server (optional: a language without them falls back to English)
+  claimCode?: string;
+  claimCodeHint?: string;
+  claimRefused?: string;
   // shared
   email: string;
   password: string;
@@ -91,6 +95,9 @@ export const DEFAULT_AUTH_LANG = "en";
 
 export const STRINGS: Record<string, AuthStrings> = {
   en: {
+    claimCode: "Architect code",
+    claimCodeHint: "This server waits for its architect. Type the code shown on the last step of «Dedicated server activation» on your computer.",
+    claimRefused: "The architect code is missing or wrong. Take it from the last step of «Dedicated server activation» on your computer.",
     email: "Email",
     password: "Password",
     or: "or",
@@ -1428,6 +1435,9 @@ export const STRINGS: Record<string, AuthStrings> = {
     signingOut: "Saioa amaitzen…",
   },
   ru: {
+    claimCode: "Код архитектора",
+    claimCodeHint: "Этот сервер ждёт своего архитектора. Введите код с последнего шага «Активации выделенного сервера» на вашем компьютере.",
+    claimRefused: "Код архитектора не введён или неверен. Возьмите его на последнем шаге «Активации выделенного сервера» на вашем компьютере.",
     email: "Электронная почта",
     password: "Пароль",
     or: "или",

@@ -89,7 +89,8 @@
     "design:take": "node scripts/design-take.mjs",
     "check:prototypes": "node scripts/check-prototypes.mjs",
     "pass": "node scripts/pass.mjs",
-    "design-skill": "node scripts/design-skill.mjs"
+    "design-skill": "node scripts/design-skill.mjs",
+    "test:claim": "node scripts/claim.test.mjs"
   },
   "dependencies": {
     "@a2a-js/sdk": "1.3.0",

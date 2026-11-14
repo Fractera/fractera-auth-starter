@@ -883,6 +883,7 @@
       },
       "usedBy": [
         "app/(auth)/login/_components/login-placeholder.client.tsx",
+        "app/(auth)/register/_components/claim-code-field.client.tsx",
         "app/(auth)/register/_components/register-placeholder.client.tsx",
         "app/[lang]/(protectedLayer)/admin/_components/design-editors/design-brief.client.tsx",
         "app/[lang]/(protectedLayer)/admin/_components/design-editors/design-colors.client.tsx",
@@ -950,6 +951,7 @@
       "usedBy": [
         "app/(auth)/guest-login/_components/guest-placeholder.client.tsx",
         "app/(auth)/login/_components/login-placeholder.client.tsx",
+        "app/(auth)/register/_components/claim-code-field.client.tsx",
         "app/(auth)/register/_components/register-placeholder.client.tsx",
         "app/[lang]/(protectedLayer)/admin/_components/design-editors/design-brief.client.tsx",
         "app/[lang]/(protectedLayer)/admin/_widgets/dynamic/widget-dynamic-site-settings/field-row.client.tsx",
