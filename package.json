@@ -91,7 +91,8 @@
     "pass": "node scripts/pass.mjs",
     "design-skill": "node scripts/design-skill.mjs",
     "test:claim": "node scripts/claim.test.mjs",
-    "ask-person": "node scripts/ask-person.mjs"
+    "ask-person": "node scripts/ask-person.mjs",
+    "browser": "node scripts/browser.mjs"
   },
   "dependencies": {
     "@a2a-js/sdk": "1.3.0",
