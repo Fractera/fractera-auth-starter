@@ -172,6 +172,10 @@ server, client or combined function. One page changes nothing: it is still a ser
   nothing fits — `npm run tool:new -- <name> "<the task>"` bears a tool with its complete card (node step 735). A new interface file says on its first lines `// @part <id> — <what>` (its card in
   the folder's `parts.json`) or `// @local — <why>`; the node's hook refuses a birth that did not ask, `check:parts-map` and
   `check:parts-dup` (the second copy of a long class string) hold it in your build; `npm run parts -- <words>` asks from the terminal.
+- **Your person's own act is a window, never a chat line** (the owner of the node, 2026-11-16, «невозможно пропустить»):
+  `npm run ask-person -- "<what>" --href <where> --why <why only they> --hint <what may pop up>` — orange at the bottom of every page
+  of the node's panel, naming you; the person's «Готово» wakes you, and you check the result yourself (skill `ask-core`, «The person's
+  hands»).
 - **Proofread before you send:** stray characters from another script — CJK, Arabic, Devanagari or others inside Russian or English
   words — are a frequent model artifact. Names and code stay as they are.
 - **Languages.** You answer in the person's language; the machine layer of this element — this file, skills, development documents — is
