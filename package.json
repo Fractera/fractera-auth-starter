@@ -91,6 +91,7 @@
     "pass": "node scripts/pass.mjs",
     "design-skill": "node scripts/design-skill.mjs",
     "test:claim": "node scripts/claim.test.mjs",
+    "test:element-admins": "node scripts/element-admins.test.mjs",
     "ask-person": "node scripts/ask-person.mjs",
     "browser": "node scripts/browser.mjs"
   },

@@ -2,6 +2,8 @@ import type Database from "better-sqlite3";
 import { nanoid } from "nanoid";
 import { ALL_ROLES } from "@/lib/auth/roles";
 import { withActor } from "@/lib/auth/users-journal";
+import { hash } from "bcrypt-ts";
+import { elementAdminRolesDiffer, isElementAdminRole, isStorableRole } from "@/lib/element-admin-role";
 
 // ПОЛЬЗОВАТЕЛИ УЗЛА ДЛЯ ВКЛАДКИ ЯДРА (узел, шаг 559-3). Дверь — `app/api/node-users/[[...path]]/route.ts`; здесь работа.
 //
@@ -189,11 +191,13 @@ export function runBatch(db: Database.Database, actor: Actor, action: Action, id
   if (list.length === 0 || list.length > 500) return { error: "ids-1-500" };
   if (action === "update" && list.length !== 1) return { error: "update-is-one-person" };
   if (action === "marketing" && value === true && list.length !== 1) return { error: "consent-is-personal" };
-  if ((action === "addRole" || action === "removeRole") && !(typeof value === "string" && (ALL_ROLES as readonly string[]).includes(value))) return { error: "unknown-role" };
+  if ((action === "addRole" || action === "removeRole") && !isStorableRole(value, ALL_ROLES)) return { error: "unknown-role" };
   if ((action === "addOrg" || action === "removeOrg") && !(typeof value === "string" && db.prepare("SELECT 1 FROM organizations WHERE id = ?").get(value))) return { error: "unknown-org" };
   if ((action === "marketing" || action === "tracking") && typeof value !== "boolean") return { error: "value-boolean" };
   const callerArchitect = actor.roles.includes("architect");
   if (action === "anonymize" && !callerArchitect) return { error: "only-architect" };
+  // 778: an element-admin role is granted and removed only by an architect.
+  if ((action === "addRole" || action === "removeRole") && isElementAdminRole(value) && !callerArchitect) return { error: "only-architect" };
 
   const out: BatchResult = { done: [], skipped: [], revoke: [], mediaToDelete: [] };
   withActor(db, actor.id, "users-tab", () => {
@@ -269,9 +273,10 @@ export function runBatch(db: Database.Database, actor: Actor, action: Action, id
           if (email !== undefined && email !== row.email && db.prepare("SELECT 1 FROM users WHERE email = ? AND id != ? AND app = (SELECT app FROM users WHERE id = ?)").get(email, id, id)) { skip("email-taken"); continue; }
           let nextRoles: string[] | undefined;
           if ("roles" in p) {
-            nextRoles = [...new Set((p.roles ?? []).filter((r) => (ALL_ROLES as readonly string[]).includes(r)))];
+            nextRoles = [...new Set((p.roles ?? []).filter((r) => isStorableRole(r, ALL_ROLES)))];
             if (nextRoles.length === 0 || nextRoles.length !== new Set(p.roles ?? []).size) { skip("bad-roles"); continue; }
             if (nextRoles.includes("architect") !== roles.includes("architect") && !callerArchitect) { skip("only-architect"); continue; }
+            if (elementAdminRolesDiffer(roles, nextRoles) && !callerArchitect) { skip("only-architect"); continue; }
           }
           const wantOrgs = "orgs" in p ? [...new Set((p.orgs ?? []).filter((o) => typeof o === "string"))] : undefined;
           if (wantOrgs?.some((o) => !db.prepare("SELECT 1 FROM organizations WHERE id = ?").get(o))) { skip("unknown-org"); continue; }
@@ -309,4 +314,104 @@ export function runBatch(db: Database.Database, actor: Actor, action: Action, id
     }
   });
   return out;
+}
+
+// ── ELEMENT ADMINS AND ACCOUNTS MADE BY THE CORE (node step 778) ──────────────────────────────────────────────────────────────────
+// Owner 2026-11-17: «При рождении элемента просим ввести e-mail и пароль». The core asks the architect for an e-mail and a password
+// when an element is born and gives that person the element's admin role through these functions.
+// 🔒 A password never appears in a log, a journal, an answer or an error: it is hashed here, the trigger `users_559_profile` writes only
+//    the word «password» into `user_log`; errors are codes. 🔒 Nobody sets their own password here. 🔒 Element-admin roles, a new
+//    password and stripping a role — an architect only. History is written by the triggers; who acts — `withActor`.
+
+export const PASSWORD_MIN = 8;
+export const PASSWORD_MAX = 200;
+type Fail = { error: string; status: number };
+const fail = (error: string, status = 400): Fail => ({ error, status });
+const passwordError = (pw: unknown): Fail | null =>
+  typeof pw !== "string" || pw.length < PASSWORD_MIN || pw.length > PASSWORD_MAX ? fail(`password-${PASSWORD_MIN}-${PASSWORD_MAX}`) : null;
+const emailOf = (raw: unknown): string | null => {
+  const e = typeof raw === "string" ? raw.trim().toLowerCase().slice(0, 254) : "";
+  return EMAIL.test(e) ? e : null;
+};
+/** A node account with this e-mail, any case (the core's people live in the app `node`). */
+const nodeAccountByEmail = (db: Database.Database, email: string) =>
+  db.prepare("SELECT id, roles, deleted_at FROM users WHERE lower(email) = ? AND app = 'node' ORDER BY created_at LIMIT 1").get(email) as
+    | { id: string; roles: string; deleted_at: string | null } | undefined;
+const insertAccount = (db: Database.Database, email: string, hashed: string, roles: string[]) => {
+  const id = nanoid();
+  db.prepare("INSERT INTO users (id, email, nickname, password, roles, provider, app) VALUES (?, ?, ?, ?, ?, 'credentials', 'node')")
+    .run(id, email, email.split("@")[0], hashed, JSON.stringify(roles));
+  return id;
+};
+
+/** POST /api/node-users/element-admin — the account exists: the role is added, the password is NEVER touched; no account: created. */
+export async function grantElementAdmin(db: Database.Database, actor: Actor, body: Record<string, unknown>): Promise<{ id: string; created: boolean } | Fail> {
+  if (!actor.roles.includes("architect")) return fail("only-architect", 403);
+  const role = body.role;
+  if (!isElementAdminRole(role)) return fail("unknown-role");
+  const email = emailOf(body.email);
+  if (!email) return fail("bad-email");
+  const found = nodeAccountByEmail(db, email);
+  if (found) {
+    if (found.deleted_at) return fail("anonymized", 409);
+    withActor(db, actor.id, "element-admin", () => {
+      const roles = parseRoles(found.roles);
+      if (!roles.includes(role)) db.prepare("UPDATE users SET roles = ?, updated_at = datetime('now') WHERE id = ?").run(JSON.stringify([...roles, role]), found.id);
+    });
+    return { id: found.id, created: false };
+  }
+  const bad = passwordError(body.password);
+  if (bad) return body.password === undefined || body.password === "" ? fail("password-required") : bad;
+  const hashed = await hash(body.password as string, 10);
+  const id = withActor(db, actor.id, "element-admin", () => insertAccount(db, email, hashed, ["user", role]));
+  return { id, created: true };
+}
+
+/** POST /api/node-users — a new node account with a password; the e-mail taken (any case) → 409. */
+export async function createUser(db: Database.Database, actor: Actor, body: Record<string, unknown>): Promise<{ id: string } | Fail> {
+  const email = emailOf(body.email);
+  if (!email) return fail("bad-email");
+  const raw = Array.isArray(body.roles) ? body.roles : [];
+  const roles = [...new Set(raw.filter((r): r is string => typeof r === "string"))];
+  if (roles.length === 0 || roles.length !== raw.length || !roles.every((r) => isStorableRole(r, ALL_ROLES))) return fail("bad-roles");
+  const architect = actor.roles.includes("architect");
+  if (roles.includes("architect") && !architect) return fail("only-architect", 403);
+  if (roles.some(isElementAdminRole) && !architect) return fail("only-architect", 403);
+  const bad = passwordError(body.password);
+  if (bad) return bad;
+  if (nodeAccountByEmail(db, email)) return fail("email-taken", 409);
+  const hashed = await hash(body.password as string, 10);
+  const id = withActor(db, actor.id, "users-tab", () => insertAccount(db, email, hashed, roles));
+  return { id };
+}
+
+/** PUT /api/node-users/<id>/password — a new password; never one's own, never an anonymized record; an architect only. */
+export async function setPassword(db: Database.Database, actor: Actor, id: string, body: Record<string, unknown>): Promise<{ id: string } | Fail> {
+  if (!actor.roles.includes("architect")) return fail("only-architect", 403);
+  if (id === actor.id) return fail("self", 403);
+  const bad = passwordError(body.password);
+  if (bad) return bad;
+  const row = db.prepare("SELECT id, deleted_at, provider FROM users WHERE id = ?").get(id) as { id: string; deleted_at: string | null; provider: string } | undefined;
+  if (!row) return fail("not-found", 404);
+  if (row.deleted_at) return fail("anonymized", 409);
+  if (row.provider === "guest") return fail("guest", 409);
+  const hashed = await hash(body.password as string, 10);
+  withActor(db, actor.id, "users-tab", () => {
+    db.prepare("UPDATE users SET password = ?, updated_at = datetime('now') WHERE id = ?").run(hashed, id);
+  });
+  return { id };
+}
+
+/** POST /api/node-users/strip-role — one element-admin role off EVERY account (the element is gone); the count of accounts changed. */
+export function stripRole(db: Database.Database, actor: Actor, role: unknown): { count: number; ids: string[] } | Fail {
+  if (!actor.roles.includes("architect")) return fail("only-architect", 403);
+  if (!isElementAdminRole(role)) return fail("unknown-role");
+  return withActor(db, actor.id, "element-admin", () => {
+    const rows = db.prepare("SELECT id, roles FROM users WHERE json_valid(roles) AND EXISTS (SELECT 1 FROM json_each(users.roles) j WHERE j.value = ?)").all(role) as { id: string; roles: string }[];
+    for (const r of rows) {
+      const next = parseRoles(r.roles).filter((x) => x !== role);
+      db.prepare("UPDATE users SET roles = ?, updated_at = datetime('now') WHERE id = ?").run(JSON.stringify(next.length ? next : ["user"]), r.id);
+    }
+    return { count: rows.length, ids: rows.map((r) => r.id) };
+  });
 }

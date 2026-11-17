@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireRoles } from "@/lib/auth/require-roles"
 import { authBaseFromHost } from "@/lib/auth-base-server"
 import { ALL_ROLES } from "@/lib/roles"
+import { isStorableRole } from "@/lib/element-admin-role"
 
 // Смена ролей одной учётной записи. Правило то же, что у соседней двери: право
 // проверяется здесь И у службы, адрес выводится из заголовка запроса, cookie
@@ -30,7 +31,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   if (!roles || roles.length === 0) {
     return NextResponse.json({ error: "roles required" }, { status: 400 })
   }
-  const unknown = roles.filter(r => !(ALL_ROLES as readonly string[]).includes(r))
+  // 778: elementAdmin001…elementAdmin980 are stored too; who may grant them the service decides (architect only).
+  const unknown = roles.filter(r => !isStorableRole(r, ALL_ROLES))
   if (unknown.length > 0) {
     return NextResponse.json({ error: `unknown roles: ${unknown.join(", ")}` }, { status: 400 })
   }

@@ -6,6 +6,16 @@ import { runBatch } from "@/lib/auth/node-users";
 import { revokeUser } from "@/lib/sso";
 import { appOfUser } from "@/lib/auth/apps";
 import { appOfElement, callerOf, ELEMENT_HEADER, isNodeArchitect, mayAdminister } from "@/lib/auth/caller";
+import { elementAdminRolesDiffer } from "@/lib/element-admin-role";
+
+const rolesOf = (raw: string): string[] => {
+  try {
+    const r = JSON.parse(raw);
+    return Array.isArray(r) ? r.filter((x): x is string => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+};
 
 export const PATCH = auth(async function PATCH(req, context) {
   // 580: человек — по куке или по билету с петли; право — по приложению записи (`lib/auth/caller.ts`).
@@ -71,6 +81,14 @@ export const PATCH = auth(async function PATCH(req, context) {
         { status: 403 },
       );
     }
+  }
+
+  // 778: роль администратора элемента (elementAdmin001…980) выдаёт и снимает только архитектор узла — как роль архитектора.
+  if (!callerIsArchitect && body.roles !== undefined && elementAdminRolesDiffer(rolesOf(user.roles), Array.isArray(body.roles) ? body.roles : [])) {
+    return NextResponse.json(
+      { error: "Only an architect may grant or remove an element-admin role", requires: ["architect"] },
+      { status: 403 },
+    );
   }
 
   const updates: string[] = [];

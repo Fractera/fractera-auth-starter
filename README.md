@@ -110,6 +110,34 @@ owner's words (2026-10-21/22): «таблица пользователей до�
 Not built: an owner of an application managing their own people, moving people between applications, guests of an application (a guest
 stays `node`). Proof — `/code` `completed-steps/554-*.md`.
 
+## Element admins (step 778)
+
+The owner, 2026-11-17: «elementAdmin001…elementAdmin980 … во всех проектах могут быть одинаковыми изначально создать и жёстко пришить использовать только эти названия»; «При рождении элемента просим ввести e-mail и пароль».
+
+**The roles.** One fixed family `elementAdmin001` … `elementAdmin980`, the same in every Fractera project, never generated per node:
+`/^elementAdmin(\d{3})$/` with 1 ≤ n ≤ 980 (`lib/element-admin-role.ts`, the core's rule written again). They are not in `ALL_ROLES`
+(role pickers read those 15). They are stored, validated and returned wherever roles are: `/api/session`, the users list and its role
+filter, PATCH of roles (`/api/admin/users/<id>`, `/api/users/<id>`), the batch of the users tab.
+
+**The doors** — the architect key `x-architect-token`, loopback only, the actor in `x-node-actor` and `x-node-actor-roles`, like the
+other `/api/node-users` doors:
+
+| Door | What |
+|---|---|
+| `POST /api/node-users/element-admin { email, password?, role }` | the e-mail has a `node` account (any case) — the role is added, the password is **never** touched → `{ ok, created: false, id }`; no account — the password is required → a password account with roles `[user, role]` → `{ ok, created: true, id }` |
+| `POST /api/node-users { email, password, roles[] }` | a new `node` password account; the e-mail taken (any case) → 409 |
+| `PUT /api/node-users/<id>/password { password }` | a new password; the sessions on tickets of that person end |
+| `POST /api/node-users/strip-role { role }` | one element-admin role off every account → `{ ok, count }` (an account left with no role keeps `user`) |
+
+**The counterweight.** Only an actor holding `architect` calls `element-admin`, `password` and `strip-role`, grants or removes any
+element-admin role (PATCH, the batch), or creates an account holding one — otherwise 403 with `requires: ["architect"]`. Nobody sets
+their own password here. A password is 8–200 characters. Every change is written by the database triggers into the role history and
+`user_log` (sources `element-admin`, `users-tab`); a password never appears in a log, the journal, an answer or an error — the log says
+only that it changed.
+
+**Proven by** `npm run test:element-admins`: a production build into `.next-t778` (removed after) on a fresh database, the real doors over
+HTTP, sign-in through the real NextAuth form, `/api/session` by the real cookie; negative controls for every rule.
+
 ## Where it came from
 
 Moved out of `ai-workspace/services/auth` on 2026-09-20 (step 257-1). Ported onto the native element template
