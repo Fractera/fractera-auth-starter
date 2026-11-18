@@ -10,12 +10,11 @@ type Props = {
   email: string;
   appUrl: string;
   adminUrl: string;
-  chatUrl: string;
   memoryUrl: string;
   roles: string[];
 };
 
-export function LoggedInView({ email, appUrl, adminUrl, chatUrl, memoryUrl, roles }: Props) {
+export function LoggedInView({ email, appUrl, adminUrl, memoryUrl, roles }: Props) {
   const isAdmin = roles.includes("architect");
 
   // Same language mechanic as the login / register forms: every language is
@@ -44,7 +43,7 @@ export function LoggedInView({ email, appUrl, adminUrl, chatUrl, memoryUrl, role
         {/* Destinations: stacked vertically under a separator, carrying the same
             weight as the sign-in button on the login form. Base UI's Button has
             no asChild, so the anchors wear buttonVariants() directly. */}
-        {(appUrl || (isAdmin && (adminUrl || chatUrl || memoryUrl))) && (
+        {(appUrl || (isAdmin && (adminUrl || memoryUrl))) && (
           <div className="flex flex-col gap-3 pt-6 border-t border-border">
             {appUrl && (
               <a href={appUrl} className={cn(buttonVariants(), "w-full")}>
@@ -56,18 +55,8 @@ export function LoggedInView({ email, appUrl, adminUrl, chatUrl, memoryUrl, role
                 {s.goToAdmin}
               </a>
             )}
-            {/* 🔒 ЧАТ — ТОЛЬКО АРХИТЕКТОРУ, КАК И ПАНЕЛЬ: сам чат отказывает
-                остальным ролям на двери сообщений, и предлагать сюда дорогу тому,
-                кого там не пустят, значит обещать несуществующее.
-                🛑 Подпись через запасной английский: ключ есть у двух языков из
-                82, и остальные восемьдесят придут файлом переводов. */}
-            {isAdmin && chatUrl && (
-              <a href={chatUrl} className={cn(buttonVariants(), "w-full")}>
-                {s.goToChat ?? "Go to AI agent chat"}
-              </a>
-            )}
-            {/* 🔒 ПАМЯТЬ — ТОЛЬКО АРХИТЕКТОРУ, ПО ТОМУ ЖЕ ДОВОДУ, ЧТО ПАНЕЛЬ И
-                ЧАТ: её страница сама требует роль `architect`, и предлагать
+            {/* 🔒 ПАМЯТЬ — ТОЛЬКО АРХИТЕКТОРУ, ПО ТОМУ ЖЕ ДОВОДУ, ЧТО ПАНЕЛЬ:
+                её страница сама требует роль `architect`, и предлагать
                 дорогу тому, кого там развернут, значит обещать несуществующее.
                 🛑 Подпись через запасной английский: ключ есть у двух языков из
                 82, остальные восемьдесят придут файлом переводов. */}
