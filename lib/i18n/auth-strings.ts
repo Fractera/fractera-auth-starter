@@ -15,6 +15,8 @@ export type AuthStrings = {
   claimCode?: string;
   claimCodeHint?: string;
   claimRefused?: string;
+  /** 796-1: the line above the register form while an e-mail claim waits, and the refusal of another e-mail. */
+  claimEmailOnly?: string;
   // shared
   email: string;
   password: string;
@@ -98,6 +100,7 @@ export const STRINGS: Record<string, AuthStrings> = {
     claimCode: "Architect code",
     claimCodeHint: "This server waits for its architect. Type the code shown on the last step of «Dedicated server activation» on your computer.",
     claimRefused: "The architect code is missing or wrong. Take it from the last step of «Dedicated server activation» on your computer.",
+    claimEmailOnly: "Only the architect may register here first — with the e-mail given when the server was launched.",
     email: "Email",
     password: "Password",
     or: "or",
@@ -1438,6 +1441,7 @@ export const STRINGS: Record<string, AuthStrings> = {
     claimCode: "Код архитектора",
     claimCodeHint: "Этот сервер ждёт своего архитектора. Введите код с последнего шага «Активации выделенного сервера» на вашем компьютере.",
     claimRefused: "Код архитектора не введён или неверен. Возьмите его на последнем шаге «Активации выделенного сервера» на вашем компьютере.",
+    claimEmailOnly: "Первым здесь может зарегистрироваться только архитектор — с тем e-mail, который указан при запуске сервера.",
     email: "Электронная почта",
     password: "Пароль",
     or: "или",

@@ -7,7 +7,7 @@ import { auth } from "./auth";
 import { ALL_ROLES } from "./roles";
 import { headers } from "next/headers";
 import { appOfReturn } from "./apps";
-import { claimMatches, claimPending, endClaim } from "./claim";
+import { endClaim, firstAccountGate } from "./claim";
 
 type RegisterResult =
   | { success: true; roles: string[] }
@@ -86,9 +86,11 @@ export async function register(email: string, password: string, code = ""): Prom
   // право, и в учётной записи ему делать нечего.
   // 554-3: «первый» — только в узле; первый человек приложения завода — обычный пользователь этого приложения.
   const isFirst = app === "node" && !db.prepare("SELECT id FROM users WHERE app = 'node' LIMIT 1").get();
-  // 739-1: a fresh server waits for its architect's one-time code — without it nobody becomes the first account (`claim.ts`).
-  const claimed = isFirst && claimPending(db);
-  if (claimed && !claimMatches(code)) return { success: false, error: "claim-code" };
+  // 739-1, 796-1: a fresh server waits for its architect — by the claimed e-mail (any letter case) or by the one-time code; nobody else
+  // becomes the first account (`claim.ts`). The second account is an ordinary user as before.
+  const gate = firstAccountGate(db, isFirst, normalizedEmail, code);
+  if (!gate.ok) return { success: false, error: gate.error ?? "claim-code" };
+  const claimed = gate.claimed;
   const roles: string[] = isFirst ? ALL_ROLES.filter((r) => r !== "guest") : ["user"];
 
   db.prepare(

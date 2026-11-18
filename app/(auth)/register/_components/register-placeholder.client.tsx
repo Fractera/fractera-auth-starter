@@ -13,7 +13,7 @@ import { getAuthStrings, detectBrowserLang, DEFAULT_AUTH_LANG, type AuthStrings,
 import { SignedInGate } from "../../_components/signed-in-card.client";
 import { rememberSignedInHere } from "@/lib/auth/device-memory";
 import { FirstAccountWarning } from "./first-account-warning.client";
-import { ClaimCodeField } from "./claim-code-field.client";
+import { ClaimCodeField, ClaimEmailNotice, useClaimKind } from "./claim-code-field.client";
 
 export function AccessDeniedModal({ onClose, s }: { onClose: () => void; s: AuthStrings }) {
   return (
@@ -122,6 +122,8 @@ function RegisterForm() {
   const [lang, setLang] = useState(DEFAULT_AUTH_LANG);
   useEffect(() => { setLang(detectBrowserLang()); }, []);
   const s = getAuthStrings(lang);
+  const claimKind = useClaimKind(); // 796-1: an e-mail claim — a line above the form; a code claim (739) — the code field
+  const claimEmailOnly = s.claimEmailOnly ?? getAuthStrings(DEFAULT_AUTH_LANG).claimEmailOnly ?? "";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,7 +132,7 @@ function RegisterForm() {
     setLoading(true);
     try {
       const result = await register(email, password, code);
-      if (!result.success) { setError(result.error === "claim-code" ? (s.claimRefused ?? getAuthStrings(DEFAULT_AUTH_LANG).claimRefused ?? result.error) : result.error); return; }
+      if (!result.success) { setError(result.error === "claim-code" ? (s.claimRefused ?? getAuthStrings(DEFAULT_AUTH_LANG).claimRefused ?? result.error) : result.error === "claim-email" ? claimEmailOnly : result.error); return; }
 
       const res = await signIn("credentials", { email, password, redirect: false });
       if (res?.error) { setError(s.signInFailedAfterReg); return; }
@@ -195,6 +197,7 @@ function RegisterForm() {
             <p className="text-sm text-muted-foreground">{s.registerSubtitle}</p>
           </div>
           <FirstAccountWarning s={s} />
+          {claimKind === "email" && <ClaimEmailNotice text={claimEmailOnly} />}
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="reg-email">{s.email}</Label>
@@ -213,7 +216,7 @@ function RegisterForm() {
               <Label htmlFor="reg-confirm">{s.confirmPassword}</Label>
               <Input id="reg-confirm" type={showPassword ? "text" : "password"} value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="••••••••" autoComplete="new-password" disabled={loading} required />
             </div>
-            <ClaimCodeField disabled={loading} hint={s.claimCodeHint ?? getAuthStrings(DEFAULT_AUTH_LANG).claimCodeHint ?? ""} label={s.claimCode ?? getAuthStrings(DEFAULT_AUTH_LANG).claimCode ?? ""} onChange={setCode} value={code} />
+            {claimKind === "code" && <ClaimCodeField disabled={loading} hint={s.claimCodeHint ?? getAuthStrings(DEFAULT_AUTH_LANG).claimCodeHint ?? ""} label={s.claimCode ?? getAuthStrings(DEFAULT_AUTH_LANG).claimCode ?? ""} onChange={setCode} value={code} />}
             {error && <p className="text-xs text-destructive bg-destructive/10 rounded px-2 py-1.5">{error}</p>}
             <Button type="submit" disabled={loading} className="w-full">
               {loading ? <><Loader2 className="size-4 animate-spin" /> {s.creatingAccount}</> : s.createAccount}

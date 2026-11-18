@@ -447,6 +447,7 @@
         ]
       },
       "usedBy": [
+        "app/(auth)/register/_components/claim-code-field.client.tsx",
         "app/(auth)/register/_components/first-account-warning.client.tsx",
         "components/ai-elements/confirmation.tsx"
       ]
