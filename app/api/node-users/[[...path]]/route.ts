@@ -14,7 +14,9 @@ import { appOrg, createOrg, createUser, grantElementAdmin, historyOf, HISTORY_KI
 //   POST /api/node-users/batch { action, ids[], value? }
 //   POST /api/node-users/apps { element } — организация-приложение элемента завода (554-1): есть — та же, нет — новая
 //   778 — администраторы элементов (README, «Element admins (step 778)»); a, c, d и любая роль elementAdmin — только архитектор:
-//   POST /api/node-users/element-admin { email, password?, role }   POST /api/node-users { email, password, roles[] }
+//   POST /api/node-users/element-admin { email, password?, role, element? }   POST /api/node-users { email, password, roles[], element? }
+//   803-1: `element` — an element with an app organization → the account lives in that element's app (its own site admits it);
+//   absent or no app organization → app `node`. batch: the last active architect is never anonymized, blocked or stripped.
 //   PUT  /api/node-users/<id>/password { password }                  POST /api/node-users/strip-role { role }
 //   🔒 Пароль не попадает ни в лог, ни в журнал, ни в ответ, ни в ошибку.
 // 🔒 ЗАМОК — КЛЮЧ АРХИТЕКТОРА (`ARCHITECT_TOKEN`, заголовок `x-architect-token`) и только петля машины. Ключ общий у ядра и этой службы

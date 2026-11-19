@@ -25,9 +25,12 @@
     "wakeOnCall": false
   },
   "development": {
-    "steps": [],
-    "current": null,
-    "state": "done",
-    "at": "2026-11-17T18:38:10.033Z"
+    "steps": [
+      "803.1"
+    ],
+    "current": "803.1",
+    "state": "waiting",
+    "next": "commit made; the push waits for the owner",
+    "at": "2026-11-19T15:03:45.792Z"
   }
 }

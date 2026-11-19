@@ -200,6 +200,11 @@ export function runBatch(db: Database.Database, actor: Actor, action: Action, id
   if ((action === "addRole" || action === "removeRole") && isElementAdminRole(value) && !callerArchitect) return { error: "only-architect" };
 
   const out: BatchResult = { done: [], skipped: [], revoke: [], mediaToDelete: [] };
+  // 803-1: the node's last active architect is never anonymized, blocked or stripped of `architect` — a node has no recovery for
+  // its architect, and at the core's machine the actor is `owner@machine`, not a row, so «self» does not hold it. Counted inside the
+  // transaction: of two architects in one batch the first may go, the second is the last.
+  const otherArchitects = (id: string) => (db.prepare(`SELECT COUNT(*) AS n FROM users WHERE id != ? AND app = 'node' AND is_active = 1
+    AND deleted_at IS NULL AND json_valid(roles) AND EXISTS (SELECT 1 FROM json_each(users.roles) j WHERE j.value = 'architect')`).get(id) as { n: number }).n;
   withActor(db, actor.id, "users-tab", () => {
     for (const id of list) {
       const row = db.prepare("SELECT id, email, roles, is_active, deleted_at, avatar_url FROM users WHERE id = ?").get(id) as
@@ -210,6 +215,8 @@ export function runBatch(db: Database.Database, actor: Actor, action: Action, id
       if (row.deleted_at) { skip("anonymized"); continue; }
       const roles = parseRoles(row.roles);
       if (roles.includes("architect") && !callerArchitect) { skip("only-architect"); continue; }
+      const lastArchitect = roles.includes("architect") && row.is_active === 1 && otherArchitects(id) === 0;
+      if (lastArchitect && (action === "anonymize" || action === "block" || (action === "removeRole" && value === "architect"))) { skip("last-architect"); continue; }
       const setRoles = (next: string[]) => db.prepare("UPDATE users SET roles = ?, updated_at = datetime('now') WHERE id = ?").run(JSON.stringify(next), id);
       const consent = (kind: "marketing" | "tracking", granted: boolean) => {
         const last = db.prepare("SELECT granted FROM user_consents WHERE user_id = ? AND kind = ? ORDER BY id DESC LIMIT 1").get(id, kind) as { granted: number } | undefined;
@@ -278,6 +285,7 @@ export function runBatch(db: Database.Database, actor: Actor, action: Action, id
             if (nextRoles.includes("architect") !== roles.includes("architect") && !callerArchitect) { skip("only-architect"); continue; }
             if (elementAdminRolesDiffer(roles, nextRoles) && !callerArchitect) { skip("only-architect"); continue; }
           }
+          if (lastArchitect && ((nextRoles && !nextRoles.includes("architect")) || p.blocked === true)) { skip("last-architect"); continue; }
           const wantOrgs = "orgs" in p ? [...new Set((p.orgs ?? []).filter((o) => typeof o === "string"))] : undefined;
           if (wantOrgs?.some((o) => !db.prepare("SELECT 1 FROM organizations WHERE id = ?").get(o))) { skip("unknown-org"); continue; }
 
@@ -333,25 +341,35 @@ const emailOf = (raw: unknown): string | null => {
   const e = typeof raw === "string" ? raw.trim().toLowerCase().slice(0, 254) : "";
   return EMAIL.test(e) ? e : null;
 };
-/** A node account with this e-mail, any case (the core's people live in the app `node`). */
-const nodeAccountByEmail = (db: Database.Database, email: string) =>
-  db.prepare("SELECT id, roles, deleted_at FROM users WHERE lower(email) = ? AND app = 'node' ORDER BY created_at LIMIT 1").get(email) as
+/** An account with this e-mail, any case, inside one application (`users.app`: the core's people live in `node`). */
+const accountByEmail = (db: Database.Database, email: string, app: string) =>
+  db.prepare("SELECT id, roles, deleted_at FROM users WHERE lower(email) = ? AND app = ? ORDER BY created_at LIMIT 1").get(email, app) as
     | { id: string; roles: string; deleted_at: string | null } | undefined;
-const insertAccount = (db: Database.Database, email: string, hashed: string, roles: string[]) => {
+const insertAccount = (db: Database.Database, email: string, hashed: string, roles: string[], app: string) => {
   const id = nanoid();
-  db.prepare("INSERT INTO users (id, email, nickname, password, roles, provider, app) VALUES (?, ?, ?, ?, ?, 'credentials', 'node')")
-    .run(id, email, email.split("@")[0], hashed, JSON.stringify(roles));
+  db.prepare("INSERT INTO users (id, email, nickname, password, roles, provider, app) VALUES (?, ?, ?, ?, ?, 'credentials', ?)")
+    .run(id, email, email.split("@")[0], hashed, JSON.stringify(roles), app);
   return id;
 };
+/** 803-1: the application an account made by the core belongs to. `element` absent → `node`; an element with an app organization
+ *  (554-1) → that element's app, so its admin signs in on its own site; an element without one → `node`, as before. */
+const appForElement = (db: Database.Database, raw: unknown): string | Fail => {
+  if (raw === undefined || raw === null || raw === "") return "node";
+  if (typeof raw !== "string" || !/^[a-z][a-z0-9-]{1,39}$/.test(raw)) return fail("bad-element");
+  return db.prepare("SELECT 1 FROM organizations WHERE element = ?").get(raw) ? raw : "node";
+};
 
-/** POST /api/node-users/element-admin — the account exists: the role is added, the password is NEVER touched; no account: created. */
+/** POST /api/node-users/element-admin — the account exists (in the app of `element`, 803-1): the role is added, the password is NEVER
+ *  touched; no account: created there. */
 export async function grantElementAdmin(db: Database.Database, actor: Actor, body: Record<string, unknown>): Promise<{ id: string; created: boolean } | Fail> {
   if (!actor.roles.includes("architect")) return fail("only-architect", 403);
   const role = body.role;
   if (!isElementAdminRole(role)) return fail("unknown-role");
   const email = emailOf(body.email);
   if (!email) return fail("bad-email");
-  const found = nodeAccountByEmail(db, email);
+  const app = appForElement(db, body.element);
+  if (typeof app !== "string") return app;
+  const found = accountByEmail(db, email, app);
   if (found) {
     if (found.deleted_at) return fail("anonymized", 409);
     withActor(db, actor.id, "element-admin", () => {
@@ -363,11 +381,11 @@ export async function grantElementAdmin(db: Database.Database, actor: Actor, bod
   const bad = passwordError(body.password);
   if (bad) return body.password === undefined || body.password === "" ? fail("password-required") : bad;
   const hashed = await hash(body.password as string, 10);
-  const id = withActor(db, actor.id, "element-admin", () => insertAccount(db, email, hashed, ["user", role]));
+  const id = withActor(db, actor.id, "element-admin", () => insertAccount(db, email, hashed, ["user", role], app));
   return { id, created: true };
 }
 
-/** POST /api/node-users — a new node account with a password; the e-mail taken (any case) → 409. */
+/** POST /api/node-users — a new account with a password (in the app of `element`, 803-1); the e-mail taken in that app (any case) → 409. */
 export async function createUser(db: Database.Database, actor: Actor, body: Record<string, unknown>): Promise<{ id: string } | Fail> {
   const email = emailOf(body.email);
   if (!email) return fail("bad-email");
@@ -379,9 +397,11 @@ export async function createUser(db: Database.Database, actor: Actor, body: Reco
   if (roles.some(isElementAdminRole) && !architect) return fail("only-architect", 403);
   const bad = passwordError(body.password);
   if (bad) return bad;
-  if (nodeAccountByEmail(db, email)) return fail("email-taken", 409);
+  const app = appForElement(db, body.element);
+  if (typeof app !== "string") return app;
+  if (accountByEmail(db, email, app)) return fail("email-taken", 409);
   const hashed = await hash(body.password as string, 10);
-  const id = withActor(db, actor.id, "users-tab", () => insertAccount(db, email, hashed, roles));
+  const id = withActor(db, actor.id, "users-tab", () => insertAccount(db, email, hashed, roles, app));
   return { id };
 }
 

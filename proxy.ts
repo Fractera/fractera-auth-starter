@@ -675,7 +675,8 @@ export const config = {
 //   · every page answer carries the former frame-ancestors policy (the core shows sign-in in its Preview frame).
 // Everything else — the template's own doors and pages — goes through the template proxy unchanged.
 const SESSION_COOKIES = ["__Secure-authjs.session-token", "authjs.session-token"]
-const AUTH_PAGES = new Set(["/login", "/register", "/signout", "/guest-login", "/logout"])
+// 803-1: `/continue-as` — the choice of the single sign-in door for a session the site admits but which is not its own person.
+const AUTH_PAGES = new Set(["/login", "/register", "/signout", "/guest-login", "/logout", "/continue-as"])
 // 559-3: `/api/node-users` — дверь пользователей узла для ядра; стережёт себя сама (ключ архитектора, только петля машины).
 // 580-2: `/api/app-users` — люди одного приложения для его сайта; стережёт себя сама (человек по куке или билету, приложение записи).
 // 739-1: `/api/claim` — the architect's one-time code of a fresh server; guards itself (GET says only «pending», POST: the architect's key, loopback).

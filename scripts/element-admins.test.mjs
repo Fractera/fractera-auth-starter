@@ -3,7 +3,7 @@
 // Each rule has its negative control; sign-in goes through the real NextAuth credentials form, /api/session through the real cookie.
 import assert from 'node:assert/strict'
 import { spawn, spawnSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -12,11 +12,19 @@ import Database from 'better-sqlite3'
 const tmp = mkdtempSync(join(tmpdir(), 'element-admins-'))
 const DIST = '.next-t778'
 const KEY = 'test-architect-key-778'
+// 803-1: a factory node around the service — the app element `shop` on its own domain, and `plain` (a custom element with no app
+// organization), so the single sign-in door has an app site and a node site to return to.
+const nodeRoot = join(tmp, 'node')
+for (const d of ['logs', 'WEB4-ITEMS-REGISTRY', 'data/services/shop', 'data/services/plain']) mkdirSync(join(nodeRoot, d), { recursive: true })
+writeFileSync(join(nodeRoot, 'logs', 'domain.json'), JSON.stringify({ zone: 'node.example.com' }))
+writeFileSync(join(nodeRoot, 'WEB4-ITEMS-REGISTRY', 'web4-items.json'), JSON.stringify({ nodeType: 'factory', services: [{ id: 'shop', kind: 'user' }, { id: 'plain', kind: 'user' }] }))
+writeFileSync(join(nodeRoot, 'data/services/shop/domain.json'), JSON.stringify({ domain: 'shop.example.com' }))
+writeFileSync(join(nodeRoot, 'data/services/plain/domain.json'), JSON.stringify({ domain: 'plain.example.com' }))
 const port = await new Promise((ok) => { const s = createServer().listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => ok(p)) }) })
 const BASE = `http://127.0.0.1:${port}`
 const env = {
   ...process.env, PORT: String(port), NEXT_DIST_DIR: DIST, DATABASE_URL: join(tmp, 'auth.db'), SERVICE_DATA_DIR: tmp,
-  ARCHITECT_TOKEN: KEY, HOSTNAME: '127.0.0.1', NEXTAUTH_URL: BASE, NEXTAUTH_SECRET: 'test-secret-778-'.repeat(3), AUTH_SECRET: 'test-secret-778-'.repeat(3), AUTH_TRUST_HOST: 'true', COOKIE_SECURE: 'false', COOKIE_DOMAIN: '', NODE_ENV: 'production',
+  ARCHITECT_TOKEN: KEY, NODE_DOMAIN_FILE: join(nodeRoot, 'logs', 'domain.json'), HOSTNAME: '127.0.0.1', NEXTAUTH_URL: BASE, NEXTAUTH_SECRET: 'test-secret-778-'.repeat(3), AUTH_SECRET: 'test-secret-778-'.repeat(3), AUTH_TRUST_HOST: 'true', COOKIE_SECURE: 'false', COOKIE_DOMAIN: '', NODE_ENV: 'production',
 }
 // ✗ 778: under `next dev` /api/session answers a demo architect (`shouldBypassAuth`: development) — a session check there proves nothing.
 console.log('  … building for production (a few minutes)')
@@ -32,7 +40,11 @@ server.stderr.on('data', (d) => { log += d })
 const stop = () => { try { server.kill('SIGTERM') } catch {} ; rmSync(DIST, { recursive: true, force: true }) }
 
 let passed = 0
-const t = async (name, fn) => { await fn(); passed += 1; console.log(`  ✓ ${name}`) }
+const failed = []
+// A failed check is named and the run goes on (803-1): a spoiled rule must show every check it breaks, not only the first.
+const t = async (name, fn) => {
+  try { await fn(); passed += 1; console.log(`  ✓ ${name}`) } catch (e) { failed.push(name); console.log(`  ✗ ${name}\n      ${String(e?.message ?? e).split('\n')[0]}`) }
+}
 const ARCH = { 'x-node-actor': 'arch-1', 'x-node-actor-roles': 'architect' }
 const ADMIN = { 'x-node-actor': 'admin-1', 'x-node-actor-roles': 'admin' }
 const call = async (method, path, body, { key = KEY, actor = ARCH } = {}) => {
@@ -47,14 +59,15 @@ const cookieJar = (res, jar = {}) => {
 }
 const cookieHeader = (jar) => Object.entries(jar).map(([k, v]) => `${k}=${v}`).join('; ')
 /** The real form: csrf → credentials callback. Returns the cookie jar when the session cookie was set, else null. */
-const signIn = async (email, password) => {
+const signIn = async (email, password, site) => {
   const r1 = await fetch(`${BASE}/api/auth/csrf`)
   const jar = cookieJar(r1)
   const { csrfToken } = await r1.json()
   const r2 = await fetch(`${BASE}/api/auth/callback/credentials`, {
     method: 'POST', redirect: 'manual',
     headers: { 'content-type': 'application/x-www-form-urlencoded', cookie: cookieHeader(jar) },
-    body: new URLSearchParams({ csrfToken, email, password }),
+    // 803-1: `site` — sign in for an app site: the form's callbackUrl carries the return, as the real form does.
+    body: new URLSearchParams({ csrfToken, email, password, ...(site ? { callbackUrl: `${BASE}/login?callbackUrl=${encodeURIComponent(site)}` } : {}) }),
   })
   cookieJar(r2, jar)
   if (process.env.DEBUG778) console.log('signIn', r2.status, r2.headers.get('location'), Object.keys(jar))
@@ -171,7 +184,105 @@ try {
       assert.ok(!dump.includes(pw), `journal holds ${pw}`); assert.ok(!log.includes(pw), `server log holds ${pw}`)
     }
   })
-  console.log(`element admins: ${passed} checks passed`)
+  // ── 803-1 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  const db = () => new Database(join(tmp, 'auth.db'), { readonly: true })
+  const appOf = (id) => { const d = db(); const r = d.prepare('SELECT app FROM users WHERE id = ?').get(id); d.close(); return r?.app }
+  const SHOP = 'https://shop.example.com/api/auth/callback?next=%2F'
+  let shopAdmin
+  await t('803-1 (1): element with an app organization → the admin is created in THAT app, beside the node account of the same e-mail', async () => {
+    assert.equal((await call('POST', '/apps', { element: 'shop' })).status, 200)
+    const r = await call('POST', '/element-admin', { email: 'Owner@Example.com', password: 'shop-password-1', role: 'elementAdmin011', element: 'shop' })
+    assert.equal(r.status, 200, r.text); assert.equal(r.json.created, true); assert.notEqual(r.json.id, oldId, 'not the node account')
+    shopAdmin = r.json.id
+    assert.equal(appOf(shopAdmin), 'shop'); assert.equal(appOf(oldId), 'node')
+  })
+  await t('803-1 (1): the existing account of that app gets the role, its password never touched', async () => {
+    const r = await call('POST', '/element-admin', { email: 'owner@example.com', password: 'other-password-9', role: 'elementAdmin012', element: 'shop' })
+    assert.deepEqual(r.json, { ok: true, created: false, id: shopAdmin })
+    assert.ok(await signIn('owner@example.com', 'shop-password-1', SHOP), 'the app password still signs in on the app site')
+    assert.equal(await signIn('owner@example.com', 'other-password-9', SHOP), null, 'negative: the request password was not set')
+  })
+  await t('803-1 (1) negative: no element, an element without an app organization → the node account, as before; a malformed element → 400', async () => {
+    const a = await call('POST', '/element-admin', { email: 'owner@example.com', role: 'elementAdmin013' })
+    assert.deepEqual(a.json, { ok: true, created: false, id: oldId })
+    const b = await call('POST', '/element-admin', { email: 'owner@example.com', role: 'elementAdmin013', element: 'plain' })
+    assert.deepEqual(b.json, { ok: true, created: false, id: oldId })
+    const c = await call('POST', '/element-admin', { email: 'owner@example.com', role: 'elementAdmin013', element: 'Bad Element!' })
+    assert.equal(c.status, 400); assert.equal(c.json.error, 'bad-element')
+  })
+  await t('803-1 (1): POST /api/node-users with element → the app; the same e-mail again in that app → 409; in node it is free', async () => {
+    const r = await call('POST', '', { email: 'buyer@example.com', password: 'buyer-password-1', roles: ['user'], element: 'shop' })
+    assert.equal(r.status, 200, r.text); assert.equal(appOf(r.json.id), 'shop')
+    assert.equal((await call('POST', '', { email: 'BUYER@example.com', password: 'buyer-password-2', roles: ['user'], element: 'shop' })).status, 409)
+    const n = await call('POST', '', { email: 'buyer@example.com', password: 'buyer-password-3', roles: ['user'] })
+    assert.equal(n.status, 200, n.text); assert.equal(appOf(n.json.id), 'node')
+  })
+
+  const archA = await call('POST', '', { email: 'arch-a@example.com', password: 'arch-a-password', roles: ['user', 'architect'] })
+  const archAId = archA.json?.id
+  const sso = (jar, ret, extra = '', lang) => fetch(`${BASE}/api/auth/sso?return=${encodeURIComponent(ret)}${extra}`,
+    { redirect: 'manual', headers: { cookie: cookieHeader(jar), ...(lang ? { 'accept-language': lang } : {}) } })
+  await t('803-1 (3): the node architect on an app site → the choice page, not a code', async () => {
+    const jar = await signIn('arch-a@example.com', 'arch-a-password')
+    assert.ok(jar, 'the architect signs in')
+    const r = await sso(jar, SHOP)
+    assert.equal(r.status, 302); const loc = new URL(r.headers.get('location'))
+    assert.equal(loc.pathname, '/continue-as'); assert.equal(loc.searchParams.get('return'), SHOP); assert.ok(!loc.searchParams.get('code'))
+  })
+  await t('803-1 (3): the choice page — ru words, en words, de falls back to English; the two links', async () => {
+    const jar = await signIn('arch-a@example.com', 'arch-a-password')
+    const page = async (lang) => (await fetch(`${BASE}/continue-as?return=${encodeURIComponent(SHOP)}`, { headers: { cookie: cookieHeader(jar), 'accept-language': lang } })).text()
+    const ru = await page('ru-RU,ru;q=0.9,en;q=0.8')
+    for (const w of ['Вы вошли как arch-a@example.com', 'Продолжить как arch-a@example.com', 'Войти другим аккаунтом']) assert.ok(ru.includes(w), w)
+    const en = await page('en-US')
+    for (const w of ['You are signed in as arch-a@example.com', 'Continue as arch-a@example.com', 'Sign in with another account']) assert.ok(en.includes(w), w)
+    assert.ok((await page('de-DE,de')).includes('Sign in with another account'), 'de → English')
+    const ssoPath = `/api/auth/sso?return=${encodeURIComponent(SHOP)}`
+    assert.ok(en.includes(`href="${`${ssoPath}&confirmed=1`.replace(/&/g, '&amp;')}"`), 'continue link')
+    assert.ok(en.includes(`href="/logout?redirectUrl=${encodeURIComponent(`/login?callbackUrl=${encodeURIComponent(ssoPath)}`)}"`), 'another-account link')
+  })
+  await t('803-1 (3): «Continue» → the code to the app site; «Another account» → signed out of the center, the login with the same return', async () => {
+    const jar = await signIn('arch-a@example.com', 'arch-a-password')
+    const r = await sso(jar, SHOP, '&confirmed=1')
+    assert.equal(r.status, 302); const loc = new URL(r.headers.get('location'))
+    assert.equal(loc.host, 'shop.example.com'); assert.ok(loc.searchParams.get('code'))
+    const ssoPath = `/api/auth/sso?return=${encodeURIComponent(SHOP)}`
+    const out = await fetch(`${BASE}/logout?redirectUrl=${encodeURIComponent(`/login?callbackUrl=${encodeURIComponent(ssoPath)}`)}`, { redirect: 'manual', headers: { cookie: cookieHeader(jar) } })
+    const to = new URL(out.headers.get('location'))
+    assert.equal(to.origin, BASE); assert.equal(to.pathname, '/login'); assert.equal(to.searchParams.get('callbackUrl'), ssoPath)
+    assert.ok(out.headers.getSetCookie().some((c) => /session-token=;|session-token=[^;]*;.*(Max-Age=0|Expires=Thu, 01 Jan 1970)/i.test(c)), 'the session cookie is cleared')
+  })
+  await t('803-1 (3) negative: the app\'s own person → the code at once; the architect on a site without an app → the code at once', async () => {
+    const own = await signIn('owner@example.com', 'shop-password-1', SHOP)
+    const r = await sso(own, SHOP)
+    assert.equal(r.status, 302); assert.equal(new URL(r.headers.get('location')).host, 'shop.example.com')
+    const jar = await signIn('arch-a@example.com', 'arch-a-password')
+    const p = await sso(jar, 'https://plain.example.com/api/auth/callback')
+    assert.equal(p.status, 302); const loc = new URL(p.headers.get('location'))
+    assert.equal(loc.host, 'plain.example.com'); assert.ok(loc.searchParams.get('code'))
+  })
+
+  const batch = (action, ids, value) => call('POST', '/batch', { action, ids, value })
+  await t('803-1 (2): the last active architect is never anonymized, blocked or stripped — skip last-architect', async () => {
+    assert.ok(archAId, archA.text)
+    for (const [action, value] of [['anonymize'], ["block"], ['removeRole', 'architect'], ['update', { roles: ['user'] }], ['update', { blocked: true }]]) {
+      const r = await batch(action, [archAId], value)
+      assert.equal(r.status, 200, r.text); assert.deepEqual(r.json.skipped, [{ id: archAId, reason: 'last-architect' }], `${action} ${JSON.stringify(value)}`)
+    }
+    const ok = await batch('update', [archAId], { firstName: 'Arch' })
+    assert.deepEqual(ok.json.done, [archAId], 'other edits of the last architect still work')
+  })
+  await t('803-1 (2) negative: with two architects one may go, the second is the last', async () => {
+    const b = await call('POST', '', { email: 'arch-b@example.com', password: 'arch-b-password', roles: ['user', 'architect'] })
+    const r = await batch("block", [archAId, b.json.id])
+    assert.deepEqual(r.json.done, [archAId]); assert.deepEqual(r.json.skipped, [{ id: b.json.id, reason: 'last-architect' }])
+    assert.deepEqual((await batch('unblock', [archAId])).json.done, [archAId])
+    const an = await batch('anonymize', [b.json.id])
+    assert.deepEqual(an.json.done, [b.json.id], 'A is active again, so B may go')
+  })
+
+  console.log(`element admins: ${passed} checks passed${failed.length ? `, ${failed.length} FAILED` : ''}`)
+  if (failed.length) process.exitCode = 1
 } catch (e) {
   console.error(e); console.error(log.slice(process.env.DEBUG778 ? -8000 : -1500)); process.exitCode = 1
 } finally {

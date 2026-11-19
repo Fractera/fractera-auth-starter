@@ -18,8 +18,9 @@ export const GET = auth(function GET(req) {
   // 331-5: запись вытеснена или удалена — сессия «призрака» не считается входом.
   // 554-4: на сайт приложения завода код получает только его человек (или архитектор и гость узла); вошедший в другое
   // приложение считается не вошедшим — форма входа этого приложения (`lib/auth/apps.ts`, `admittedTo`).
+  const siteApp = appOfReturn(ret)
   const live = req.auth?.user ? liveUser(req.auth.user.id) : null
-  const user = req.auth?.user && live && admittedTo(appOfReturn(ret), req.auth.user.id, live.roles) ? req.auth.user : undefined
+  const user = req.auth?.user && live && admittedTo(siteApp, req.auth.user.id, live.roles) ? req.auth.user : undefined
   if (!user) {
     // 🔒 331: ГОСТЕВАЯ ВЕТКА ЭЛЕМЕНТА (`guest=1`). Не форма входа, а гость: `/api/auth/guest` создаёт пользователя с ролью
     // `guest` и возвращает сюда же с меткой `tried=1`, дальше — тот же код. Вернулся с меткой и без сессии (кука центра не
@@ -33,6 +34,16 @@ export const GET = auth(function GET(req) {
     const role = req.nextUrl.searchParams.get("requireRole")
     const login = new URL(`/login?callbackUrl=${encodeURIComponent(again)}${role ? `&requireRole=${encodeURIComponent(role)}` : ""}`, base)
     return NextResponse.redirect(login, 302)
+  }
+  // 🔒 803-1: ПРИЗНАН, НО НЕ СВОЙ — СНАЧАЛА ВЫБОР. Измерено владельцем на заводе: архитектор узла (запись `node`) приходил на сайт
+  // приложения и сразу получал код своей записи узла — войти своей записью приложения было нельзя, форма предлагала регистрацию
+  // и рождала вторую запись. Сессия, которую сайт признаёт (`admittedTo`), но приложение записи — другое, видит страницу
+  // `/continue-as`: «продолжить как …» (`confirmed=1` — код, как прежде) или выйти и войти другой записью. Гость узла — без выбора:
+  // его заводит сам вход (331), и ветка `guest=1` не должна упираться в страницу.
+  const role = req.nextUrl.searchParams.get("requireRole")
+  if (appOfUser(String(user.id)) !== siteApp && !live?.roles.includes("guest") && req.nextUrl.searchParams.get("confirmed") !== "1") {
+    const choice = new URL(`/continue-as?return=${encodeURIComponent(ret)}${role ? `&requireRole=${encodeURIComponent(role)}` : ""}`, base)
+    return NextResponse.redirect(choice, 302)
   }
   const code = issueCode(
     { userId: String(user.id), email: user.email ?? null, roles: (user as { roles?: string[] }).roles ?? ["user"], app: appOfUser(String(user.id)) },

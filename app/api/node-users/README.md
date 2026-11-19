@@ -18,6 +18,14 @@ through the tunnel gets 404. The core passes who acts in `x-node-actor` (user id
 **Rules** (`runBatch`): one transaction; what cannot be done is returned in `skipped` with a reason, the rest is done. Nobody edits
 their own record; the record of an architect is changed only by an architect; only an architect anonymizes; granting marketing
 consent is one person at a time (consent comes from the person); `update` checks every field before writing anything.
+The last active architect of the node (app `node`) is never anonymized, blocked or stripped of `architect`, by any action or
+`update` — reason `last-architect` (step 803-1): the actor at the core's machine is `owner@machine`, not a row, so «self» does not
+hold it, and a node has no recovery for its architect. With two architects one may go.
+
+**Accounts made by the core** (`POST /api/node-users/element-admin`, `POST /api/node-users`) take an optional `element` (step 803-1):
+when that element has an app organization (554-1) the account is looked up and created in that element's app — its own site then
+admits it; an existing account of that app gets the role and its password is never touched. Without `element`, or for an element
+without an app organization, the account lives in `node` as before. A malformed `element` → 400 `bad-element`.
 
 **Anonymization** erases first and last name, avatar (and its stored file through the data layer), password, Google links and
 sign-in methods, e-mail (→ `deleted-<id>@invalid`) and wallet; keeps the id, the pseudonym, the log and the histories. The person

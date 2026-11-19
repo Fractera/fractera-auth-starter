@@ -99,6 +99,7 @@ const ALLOWED = new Map([
   ['app/(auth)/register/page.tsx', 'auth: форма регистрации, 82 языка (549-5)'],
   ['app/(auth)/signout/page.tsx', 'auth: подтверждение выхода (549-5)'],
   ['app/(auth)/guest-login/page.tsx', 'auth: вход гостем (549-5)'],
+  ['app/(auth)/continue-as/page.tsx', 'auth: the choice of the single sign-in door — continue as this account or sign in with another (core step 803-1, the owner\'s go 2026-11-19)'],
   ['app/logout/route.ts', 'auth: выход: гасит куку и возвращает на redirectUrl (549-5)'],
   ['app/api/auth/[...nextauth]/route.ts', 'auth: конвейер NextAuth: способы входа, обратные вызовы (549-5)'],
   ['app/api/auth/architect/route.ts', 'auth: сессия слоя архитектора по ARCHITECT_TOKEN (549-5)'],

@@ -531,6 +531,7 @@
       "usedBy": [
         "app/(auth)/_components/logged-in-view.client.tsx",
         "app/(auth)/_components/signed-in-card.client.tsx",
+        "app/(auth)/continue-as/page.tsx",
         "app/(auth)/guest-login/_components/guest-placeholder.client.tsx",
         "app/(auth)/login/_components/login-placeholder.client.tsx",
         "app/(auth)/register/_components/register-placeholder.client.tsx",
@@ -624,7 +625,9 @@
           "панель с заголовком"
         ]
       },
-      "usedBy": []
+      "usedBy": [
+        "app/(auth)/continue-as/page.tsx"
+      ]
     },
     {
       "id": "ui-chart",
