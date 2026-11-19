@@ -92,6 +92,8 @@
     "design-skill": "node scripts/design-skill.mjs",
     "test:claim": "node scripts/claim.test.mjs",
     "test:element-admins": "node scripts/element-admins.test.mjs",
+    "test:required-role": "node scripts/required-role.test.mjs",
+    "test:own-app-host": "node scripts/own-app-host.test.mjs",
     "ask-person": "node scripts/ask-person.mjs",
     "browser": "node scripts/browser.mjs"
   },

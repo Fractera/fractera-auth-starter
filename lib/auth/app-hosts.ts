@@ -7,7 +7,7 @@ import { dirname, join } from "node:path"
 // адрес элемента (реестр → `data/services/<id>/address.json` → id). Ядро, вход и встроенные элементы — не «приложения»: только
 // кастомные (`kind: user`), кроме root (корень проекта).
 
-type Entry = { id: string; kind?: string; address?: string }
+type Entry = { id: string; kind?: string; address?: string; app?: string; born?: unknown; adminRole?: string }
 
 function nodeRoot(): string | null {
   const file = process.env.NODE_DOMAIN_FILE?.trim()
@@ -26,10 +26,13 @@ function registry(root: string): { nodeType?: string; services?: Entry[] } {
   return readJson(join(root, "WEB4-ITEMS-REGISTRY", "web4-items.json")) ?? {}
 }
 
-/** Узел — завод приложений (553): поле `nodeType` реестра. */
-export function isFactory(): boolean {
-  const root = nodeRoot()
-  return !!root && registry(root).nodeType === "factory"
+/** Шаг ядра 804: у узла больше нет типа — каждый рождённый элемент ответил при рождении, часть ли он проекта (`app: "project"`) или
+ *  самостоятельное приложение (`app: "own"`). Запись до 804 без ответа читает прежний тип узла (`nodeType: factory` — своё приложение),
+ *  то же правило, что у ядра (`lib/web4-items/element-app.cjs`). */
+function isOwnApp(e: Entry, nodeType: string | undefined): boolean {
+  if (e.app === "own") return true
+  if (e.app === "project") return false
+  return !!e.born && nodeType === "factory"
 }
 
 function zoneOf(root: string): string | null {
@@ -72,7 +75,23 @@ export function finalReturn(raw: string | null | undefined, base: string): URL |
   return u
 }
 
-/** На заводе вход в приложение идёт билетом и для поддомена элемента: `allowedReturn` пускает его сайт. */
-export function factoryElementHost(host: string): boolean {
-  return isFactory() && elementOfHost(host) !== null
+/** Сайт самостоятельного приложения на этом хосте (его свой домен или поддомен зоны): вход в него идёт билетом и для поддомена —
+ *  `allowedReturn` пускает его сайт, прокси заворачивает его `/login` в единый вход. 805: прежде — «узел завод» (`nodeType`), а тип
+ *  ушёл из реестра в шаге ядра 804, и вход по поддомену приложения перестал бы заворачиваться. */
+export function ownAppHost(host: string): boolean {
+  const root = nodeRoot()
+  if (!root) return false
+  const id = elementOfHost(host)
+  if (!id) return false
+  const reg = registry(root)
+  const e = (reg.services ?? []).find((x) => x.id === id)
+  return !!e && isOwnApp(e, reg.nodeType)
+}
+
+/** 805: the element's own admin role (`adminRole` of its registry entry, elementAdmin001…980, step 778) — or null. */
+export function adminRoleOf(id: string): string | null {
+  const root = nodeRoot()
+  if (!root) return null
+  const e = (registry(root).services ?? []).find((x) => x.id === id)
+  return typeof e?.adminRole === "string" && /^elementAdmin\d{3}$/.test(e.adminRole) ? e.adminRole : null
 }

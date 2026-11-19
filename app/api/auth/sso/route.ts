@@ -32,7 +32,8 @@ export const GET = auth(function GET(req) {
     }
     const again = `/api/auth/sso?return=${encodeURIComponent(ret)}`
     const role = req.nextUrl.searchParams.get("requireRole")
-    const login = new URL(`/login?callbackUrl=${encodeURIComponent(again)}${role ? `&requireRole=${encodeURIComponent(role)}` : ""}`, base)
+    // 805: the form always hears the role — none named is a visitor of the element's site, never the legacy «architect».
+    const login = new URL(`/login?callbackUrl=${encodeURIComponent(again)}&requireRole=${encodeURIComponent(role || "user")}`, base)
     return NextResponse.redirect(login, 302)
   }
   // 🔒 803-1: ПРИЗНАН, НО НЕ СВОЙ — СНАЧАЛА ВЫБОР. Измерено владельцем на заводе: архитектор узла (запись `node`) приходил на сайт

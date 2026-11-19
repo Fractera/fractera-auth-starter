@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth/auth"
 import { getDb } from "@/lib/auth/db"
 import { appOfUser } from "@/lib/auth/apps"
 import { actingRoles, appOfElement, callerOf, ELEMENT_HEADER, isNodeArchitect, mayAdminister } from "@/lib/auth/caller"
-import { historyOf, HISTORY_KINDS, listUsers, runBatch, type Action, type HistoryKind } from "@/lib/auth/node-users"
+import { createAppUser, historyOf, HISTORY_KINDS, listUsers, runBatch, type Action, type HistoryKind } from "@/lib/auth/node-users"
 import { revokeUser } from "@/lib/sso"
 import { deleteMediaLater } from "@/lib/auth/media-delete"
 
@@ -12,6 +12,7 @@ import { deleteMediaLater } from "@/lib/auth/media-delete"
 //   GET  /api/app-users?q=&role=&sort=created_desc|created_asc&page=&perPage=10|25|50|100
 //   GET  /api/app-users/<id>/history/<roles|methods|marketing|tracking|log|messenger>?page=&perPage=
 //   POST /api/app-users/batch { action, ids[], value? }
+//   POST /api/app-users/create { email, password } — 805: a person of this application; the e-mail taken anywhere — 409 email-taken
 //
 // 🎯 Владелец 2026-10-24: «вкладка для работы с пользователями своего приложения позволит также как и основная вкладка с пользователями
 // … работать с ролями пользователей но только в рамках данной организации то есть здесь нельзя будет переключить пользователя в
@@ -35,7 +36,7 @@ function scope(req: Parameters<typeof callerOf>[0]) {
   const caller = callerOf(req)
   if (!caller) return { error: json({ ok: false, error: "Unauthorized" }, 401) } as const
   const app = appOfElement(req.headers.get(ELEMENT_HEADER))
-  if (!mayAdminister(caller, app)) return { error: json({ ok: false, error: "Forbidden", requires: ["admin", "architect"] }, 403) } as const
+  if (!mayAdminister(caller, app)) return { error: json({ ok: false, error: "Forbidden", requires: ["admin", "architect", "the element's own admin"] }, 403) } as const
   return { caller, app } as const
 }
 
@@ -64,9 +65,13 @@ export const POST = auth(async function POST(req, ctx) {
   const s = scope(req)
   if ("error" in s) return s.error
   const path = (await (ctx as unknown as Ctx).params).path ?? []
-  if (!(path.length === 1 && path[0] === "batch")) return json({ ok: false, error: "unknown-path" }, 404)
+  if (!(path.length === 1 && (path[0] === "batch" || path[0] === "create"))) return json({ ok: false, error: "unknown-path" }, 404)
   const body = (await req.json().catch(() => null)) as Record<string, unknown> | null
   if (!body) return json({ ok: false, error: "bad-json" }, 400)
+  if (path[0] === "create") {
+    const made = await createAppUser(getDb(), { id: s.caller.id, roles: actingRoles(s.caller) }, s.app, body)
+    return "error" in made ? json({ ok: false, error: made.error }, made.status) : json({ ok: true, id: made.id }, 201)
+  }
   const action = body.action as Action
   if (action === "addOrg" || action === "removeOrg") return json({ ok: false, error: "org-locked" }, 400)
   if (action === "update" && body.value && typeof body.value === "object" && "orgs" in (body.value as object)) {

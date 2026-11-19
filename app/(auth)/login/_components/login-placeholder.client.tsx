@@ -37,6 +37,7 @@ function AccessDeniedModal({ onClose, s }: { onClose: () => void; s: AuthStrings
 }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { requiredRole } from "@/lib/auth/required-role.mjs";
 
 function LoginForm() {
   const router = useRouter();
@@ -45,7 +46,8 @@ function LoginForm() {
   // Default "architect" preserves the legacy contract (every callbackUrl was the
   // Admin Panel, e.g. bridges/app/proxy.ts). "user" lets user-level
   // destinations (Shell Dashboard) through without an Access Denied.
-  const requireRole = searchParams.get("requireRole") || "architect";
+  // 805: a return to an element's site through the single sign-on door waits for a visitor (lib/auth/required-role.mjs).
+  const requireRole = requiredRole(searchParams.get("requireRole"), callbackUrl);
 
   const [email, setEmail]               = useState("");
   const [password, setPassword]         = useState("");

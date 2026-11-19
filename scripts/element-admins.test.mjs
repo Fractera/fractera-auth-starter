@@ -17,7 +17,8 @@ const KEY = 'test-architect-key-778'
 const nodeRoot = join(tmp, 'node')
 for (const d of ['logs', 'WEB4-ITEMS-REGISTRY', 'data/services/shop', 'data/services/plain']) mkdirSync(join(nodeRoot, d), { recursive: true })
 writeFileSync(join(nodeRoot, 'logs', 'domain.json'), JSON.stringify({ zone: 'node.example.com' }))
-writeFileSync(join(nodeRoot, 'WEB4-ITEMS-REGISTRY', 'web4-items.json'), JSON.stringify({ nodeType: 'factory', services: [{ id: 'shop', kind: 'user' }, { id: 'plain', kind: 'user' }] }))
+// 805: the registry after core step 804 — no node type; each born element carries its answer, `shop` an app of its own with its admin role.
+writeFileSync(join(nodeRoot, 'WEB4-ITEMS-REGISTRY', 'web4-items.json'), JSON.stringify({ services: [{ id: 'shop', kind: 'user', born: { from: 'custom' }, app: 'own', adminRole: 'elementAdmin011' }, { id: 'plain', kind: 'user', born: { from: 'custom' }, app: 'project' }] }))
 writeFileSync(join(nodeRoot, 'data/services/shop/domain.json'), JSON.stringify({ domain: 'shop.example.com' }))
 writeFileSync(join(nodeRoot, 'data/services/plain/domain.json'), JSON.stringify({ domain: 'plain.example.com' }))
 const port = await new Promise((ok) => { const s = createServer().listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => ok(p)) }) })
@@ -239,7 +240,8 @@ try {
     assert.ok((await page('de-DE,de')).includes('Sign in with another account'), 'de → English')
     const ssoPath = `/api/auth/sso?return=${encodeURIComponent(SHOP)}`
     assert.ok(en.includes(`href="${`${ssoPath}&confirmed=1`.replace(/&/g, '&amp;')}"`), 'continue link')
-    assert.ok(en.includes(`href="/logout?redirectUrl=${encodeURIComponent(`/login?callbackUrl=${encodeURIComponent(ssoPath)}`)}"`), 'another-account link')
+    // 805: the login of «another account» hears the role the site asked for — none named: a visitor, never the legacy «architect».
+    assert.ok(en.includes(`href="/logout?redirectUrl=${encodeURIComponent(`/login?callbackUrl=${encodeURIComponent(ssoPath)}&requireRole=user`)}"`), 'another-account link')
   })
   await t('803-1 (3): «Continue» → the code to the app site; «Another account» → signed out of the center, the login with the same return', async () => {
     const jar = await signIn('arch-a@example.com', 'arch-a-password')
@@ -260,6 +262,50 @@ try {
     const p = await sso(jar, 'https://plain.example.com/api/auth/callback')
     assert.equal(p.status, 302); const loc = new URL(p.headers.get('location'))
     assert.equal(loc.host, 'plain.example.com'); assert.ok(loc.searchParams.get('code'))
+  })
+
+  // ── 805 ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  const appUsers = (jar, method = 'GET', path = '', body, element = 'shop') => fetch(`${BASE}/api/app-users${path}`, {
+    method, headers: { cookie: cookieHeader(jar), 'content-type': 'application/json', 'x-fractera-element': element },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+  await t('805: the single sign-on door with no role sends the form a visitor\'s role, never the legacy «architect»', async () => {
+    const r = await fetch(`${BASE}/api/auth/sso?return=${encodeURIComponent(SHOP)}`, { redirect: 'manual' })
+    assert.equal(r.status, 302); const loc = new URL(r.headers.get('location'))
+    assert.equal(loc.pathname, '/login'); assert.equal(loc.searchParams.get('requireRole'), 'user')
+    const named = await fetch(`${BASE}/api/auth/sso?return=${encodeURIComponent(SHOP)}&requireRole=elementAdmin011`, { redirect: 'manual' })
+    assert.equal(new URL(named.headers.get('location')).searchParams.get('requireRole'), 'elementAdmin011', 'a named role wins')
+  })
+  await t('805: the element\'s own admin administers the people of its app — only them', async () => {
+    const jar = await signIn('owner@example.com', 'shop-password-1', SHOP)
+    const r = await appUsers(jar, 'GET', '?perPage=100')
+    assert.equal(r.status, 200, await r.clone().text()); const j = await r.json()
+    assert.equal(j.app, 'shop'); assert.ok(j.rows.length > 0 && j.rows.every((u) => appOf(u.id) === 'shop'))
+  })
+  await t('805 negative: a plain person of the app, and the own admin of ANOTHER element, are refused (403)', async () => {
+    const buyer = await signIn('buyer@example.com', 'buyer-password-1', SHOP)
+    assert.equal((await appUsers(buyer)).status, 403)
+    const jar = await signIn('owner@example.com', 'shop-password-1', SHOP)
+    assert.equal((await appUsers(jar, 'GET', '', undefined, 'plain')).status, 403, 'plain has no app of its own: its people are node\'s')
+  })
+  let made
+  await t('805: «Добавить пользователя» — the own admin makes a person of the app; they sign in on the app site', async () => {
+    const jar = await signIn('owner@example.com', 'shop-password-1', SHOP)
+    const r = await appUsers(jar, 'POST', '/create', { email: 'New.Person@Example.com', password: 'new-person-pass1' })
+    assert.equal(r.status, 201, await r.clone().text()); made = (await r.json()).id
+    assert.equal(appOf(made), 'shop')
+    assert.ok(await signIn('new.person@example.com', 'new-person-pass1', SHOP), 'the new person signs in on the app site')
+  })
+  await t('805 negative: an e-mail that exists in ANY app → 409 email-taken (the core\'s architect, a node person, a person of this app)', async () => {
+    const jar = await signIn('owner@example.com', 'shop-password-1', SHOP)
+    for (const email of ['ARCH-A@example.com', 'admin@example.com', 'new.person@example.com']) {
+      const r = await appUsers(jar, 'POST', '/create', { email, password: 'whatever-pass-1' })
+      assert.equal(r.status, 409, email); assert.equal((await r.json()).error, 'email-taken')
+    }
+    const short = await appUsers(jar, 'POST', '/create', { email: 'short2@example.com', password: 'short7' })
+    assert.equal(short.status, 400)
+    const buyer = await signIn('buyer@example.com', 'buyer-password-1', SHOP)
+    assert.equal((await appUsers(buyer, 'POST', '/create', { email: 'x2@example.com', password: 'whatever-pass-1' })).status, 403, 'no rights — no person')
   })
 
   const batch = (action, ids, value) => call('POST', '/batch', { action, ids, value })

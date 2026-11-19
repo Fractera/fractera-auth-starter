@@ -35,7 +35,9 @@ async function ContinueAsForRequest({ searchParams }: { searchParams: Query }) {
   const email = session?.user?.email
   if (!email) redirect(sso)
   const w = continueAsWords((await headers()).get("accept-language"))
-  const other = `/logout?redirectUrl=${encodeURIComponent(`/login?callbackUrl=${encodeURIComponent(sso)}`)}`
+  // 805: the form waits for the same role the site asked for (no role named — a visitor): without it the form's legacy default
+  // «architect» refused the element's own admin after a right password (measured by the owner on his server, 2026-11-19).
+  const other = `/logout?redirectUrl=${encodeURIComponent(`/login?callbackUrl=${encodeURIComponent(sso)}&requireRole=${encodeURIComponent(role || "user")}`)}`
 
   // Plain links, not `next/link`: both lead to doors that answer 302 to another site — a soft navigation has nothing to render.
   return (

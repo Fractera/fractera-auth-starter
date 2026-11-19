@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto"
 import { readdirSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import type { NextRequest } from "next/server"
-import { factoryElementHost } from "@/lib/auth/app-hosts"
+import { ownAppHost } from "@/lib/auth/app-hosts"
 
 // ЕДИНЫЙ ВХОД ДЛЯ ДОМЕНОВ ЭЛЕМЕНТОВ (узел, шаг 328). Слово владельца 2026-09-28: «у пользователя могут быть сотни AGI ITEMS,
 // у каждого может быть свой домен, и при этом их должна покрывать общая авторизация».
@@ -67,8 +67,8 @@ export function allowedReturn(url: string): URL | null {
   try { u = new URL(url) } catch { return null }
   if (u.protocol !== "https:") return null
   const host = u.hostname.toLowerCase()
-  // 554-3: на заводе — и сайт кастомного элемента на поддомене зоны (вход в приложение идёт билетом).
-  return connectedDomains().some((d) => host === d || host === `www.${d}`) || factoryElementHost(host) ? u : null
+  // 554-3 → 805: и сайт самостоятельного приложения на поддомене зоны (вход в приложение идёт билетом).
+  return connectedDomains().some((d) => host === d || host === `www.${d}`) || ownAppHost(host) ? u : null
 }
 
 export function issueCode(who: Who, returnTo: URL): string {

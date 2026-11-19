@@ -6,7 +6,7 @@ import { isOwnerAtMachine } from "@/lib/auth/owner-at-machine";
 import { isTemporaryPublicAddress } from "@/lib/auth/temporary-address";
 import { isShowcaseRequest } from "@/lib/showcase";
 import { getSession } from "@/lib/auth/get-session";
-import { elementOfHost, isFactory } from "@/lib/auth/app-hosts";
+import { ownAppHost } from "@/lib/auth/app-hosts";
 import { authBaseFromHost, connectedDomainAuthBase, projectsBaseFromHost, publicAuthBaseFor } from "@/lib/auth-base-server";
 import { authUrl as nodeAuthUrl } from "@/lib/microservices/urls";
 import { temporaryAddressPage } from "@/lib/auth/temporary-address.page";
@@ -710,10 +710,11 @@ function withFramePolicy(req: NextRequest, res: NextResponse): NextResponse {
 // зоны человеку приложения ничего не даёт (`/api/session`, 554-4). Формы не меняются. Единый проект — без изменений.
 function factoryReturnPage(request: NextRequest): URL | null {
   const raw = request.nextUrl.searchParams.get("callbackUrl")
-  if (!raw || !isFactory()) return null
+  if (!raw) return null
   let target: URL
   try { target = new URL(raw) } catch { return null }
-  if (target.protocol !== "https:" || target.pathname === "/api/auth/callback" || !elementOfHost(target.host)) return null
+  // 805: the site of an app of its own (its answer at birth, core step 804) — not «a factory node» any more.
+  if (target.protocol !== "https:" || target.pathname === "/api/auth/callback" || !ownAppHost(target.host)) return null
   const ret = `${target.origin}/api/auth/callback?next=${encodeURIComponent(`${target.pathname}${target.search}`)}`
   const page = new URL(request.nextUrl.pathname, request.url)
   request.nextUrl.searchParams.forEach((v, k) => { if (k !== "callbackUrl") page.searchParams.set(k, v) })

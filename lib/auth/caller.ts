@@ -3,6 +3,7 @@ import { getDb } from "@/lib/auth/db"
 import { appOfUser, NODE_APP } from "@/lib/auth/apps"
 import { fromLoopback, whoByTicket } from "@/lib/sso"
 import { liveUser } from "@/lib/guest-guard"
+import { adminRoleOf } from "@/lib/auth/app-hosts"
 
 // КТО СПРАШИВАЕТ И ЧТО ЕМУ МОЖНО В ПРИЛОЖЕНИИ (узел, шаг 580).
 //
@@ -46,10 +47,12 @@ export function appOfElement(raw: string | null | undefined): string {
 export const isNodeArchitect = (c: Caller) => c.app === NODE_APP && c.roles.includes("architect")
 
 /** Может ли человек администрировать людей приложения `app`: архитектор узла — любое; администратор (и архитектор записи
- *  приложения) — только приложение своей записи. Любая другая роль — нет. */
-export function mayAdminister(c: Caller, app: string): boolean {
+ *  приложения) — только приложение своей записи; 805 — и свой админ элемента этого приложения (его роль `adminRole` в реестре,
+ *  elementAdmin001…980), тоже только в своём приложении. Любая другая роль — нет. */
+export function mayAdminister(c: Caller, app: string, ownAdminRole: string | null = adminRoleOf(app)): boolean {
   if (isNodeArchitect(c)) return true
-  return c.app === app && (c.roles.includes("admin") || c.roles.includes("architect"))
+  if (c.app !== app) return false
+  return c.roles.includes("admin") || c.roles.includes("architect") || (!!ownAdminRole && c.roles.includes(ownAdminRole))
 }
 
 /** Роли, с которыми человек действует в пакете: роль `architect` весит только у архитектора узла. Архитектор записи приложения

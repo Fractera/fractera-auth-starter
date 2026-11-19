@@ -14,6 +14,7 @@ import { SignedInGate } from "../../_components/signed-in-card.client";
 import { rememberSignedInHere } from "@/lib/auth/device-memory";
 import { FirstAccountWarning } from "./first-account-warning.client";
 import { ClaimCodeField, ClaimEmailNotice, useClaimKind } from "./claim-code-field.client";
+import { requiredRole } from "@/lib/auth/required-role.mjs";
 
 export function AccessDeniedModal({ onClose, s }: { onClose: () => void; s: AuthStrings }) {
   return (
@@ -105,7 +106,8 @@ function RegisterForm() {
   const callbackUrl = searchParams.get("callbackUrl") || "";
   // Default "architect" preserves the legacy contract (every callbackUrl was the
   // Admin Panel). "user" lets user-level destinations (Shell Dashboard) in.
-  const requireRole = searchParams.get("requireRole") || "architect";
+  // 805: a return to an element's site through the single sign-on door waits for a visitor (lib/auth/required-role.mjs).
+  const requireRole = requiredRole(searchParams.get("requireRole"), searchParams.get("callbackUrl") || "/");
 
   const [email, setEmail]               = useState("");
   const [password, setPassword]         = useState("");

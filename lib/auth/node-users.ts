@@ -405,6 +405,21 @@ export async function createUser(db: Database.Database, actor: Actor, body: Reco
   return { id };
 }
 
+/** 805 (the owner, 2026-11-19: «Если пользователь уже существует в каком-то другом элементе или в ядре … мы запрещаем создавать такого
+ *  пользователя. Это понятное временное ограничение»): POST /api/app-users/create — a person of ONE application (`user`), made by its
+ *  administrator on the element's own «Аккаунты»; the e-mail taken in ANY application of this sign-in → 409 `email-taken`. */
+export async function createAppUser(db: Database.Database, actor: Actor, app: string, body: Record<string, unknown>): Promise<{ id: string } | Fail> {
+  if (!app || app === "node") return fail("not-an-app", 400);
+  const email = emailOf(body.email);
+  if (!email) return fail("bad-email");
+  const bad = passwordError(body.password);
+  if (bad) return bad;
+  if (db.prepare("SELECT 1 FROM users WHERE lower(email) = ? LIMIT 1").get(email)) return fail("email-taken", 409);
+  const hashed = await hash(body.password as string, 10);
+  const id = withActor(db, actor.id, "app-users", () => insertAccount(db, email, hashed, ["user"], app));
+  return { id };
+}
+
 /** PUT /api/node-users/<id>/password — a new password; never one's own, never an anonymized record; an architect only. */
 export async function setPassword(db: Database.Database, actor: Actor, id: string, body: Record<string, unknown>): Promise<{ id: string } | Fail> {
   if (!actor.roles.includes("architect")) return fail("only-architect", 403);
