@@ -13,6 +13,9 @@
 // 314-2: имя подписчика — из паспорта элемента (`lib/own-id.ts`), а не "root": у источника одна запись на имя.
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return
+  // 869: the element's .env.local is applied at start and followed — a key a screen writes is live without a deploy.
+  const { startLiveEnv } = await import("./lib/live-env.mjs")
+  startLiveEnv()
   const { ownId } = await import("./lib/own-id")
   const who = ownId()
   if (!who) console.warn("[settings] у элемента нет имени (паспорт OWN-SERVICE-PROPS/ → id или ITEM_ID) — на сигналы не подписываюсь")

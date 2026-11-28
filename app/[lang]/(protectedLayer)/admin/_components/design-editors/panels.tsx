@@ -5,9 +5,9 @@ import { designUi } from './design.i18n'
 import type { AccessWords } from './settings-access'
 import { ownId } from '@/lib/own-id'
 
-const SITE = (process.env.PROJECT_SITE_URL ?? '').replace(/\/+$/, '')
-const CORE = (process.env.ARCHITECT_URL ?? '').trim().replace(/\/+$/, '')
-const loginHref = (lang: string) => (SITE ? `${SITE}/login?lang=${lang}` : undefined)
+// 869: read at call time — the address changes with the node's own domain, and the live environment follows it (lib/live-env.mjs).
+const site = () => (process.env.PROJECT_SITE_URL ?? '').replace(/\/+$/, '')
+const loginHref = (lang: string) => { const s = site(); return s ? `${s}/login?lang=${lang}` : undefined }
 // Нет адреса ядра — ссылок нет: ссылка в никуда хуже её отсутствия.
 
 export function DesignEditorPanel({ lang, section, words }: { lang: string; section: DesignSection; words: AccessWords }) {

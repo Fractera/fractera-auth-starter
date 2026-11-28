@@ -1,5 +1,4 @@
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
+import { liveEnv } from "./live-env.mjs"
 
 // Ключ OpenAI приложения — ОДНО место чтения на весь проект.
 //
@@ -8,14 +7,9 @@ import { join } from "node:path"
 // источник, а две другие продолжат отвечать «ключа нет» — и разбираться в этом
 // будут по симптому «в одном месте работает, в другом нет».
 //
-// Порядок источников: окружение процесса, затем `.env.local` слота. Дальше не
+// Источник один: `.env.local` элемента (ELEMENT_DIR), прочитанный свежим, — он же окружение процесса. Дальше не
 // ищем — ключ службы RAG принадлежит панели, а не приложению клиента.
 export function openAiKey(): string {
-  if (process.env.OPENAI_API_KEY) return process.env.OPENAI_API_KEY
-  try {
-    const raw = readFileSync(join(process.cwd(), ".env.local"), "utf8")
-    return (raw.match(/^OPENAI_API_KEY=(.+)$/m) ?? [])[1]?.trim() ?? ""
-  } catch {
-    return ""
-  }
+  // 869: the element's own .env.local first, read fresh — a key a screen writes is live without a deploy (lib/live-env.mjs).
+  return liveEnv("OPENAI_API_KEY")?.trim() ?? ""
 }

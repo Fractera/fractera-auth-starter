@@ -16,11 +16,13 @@ import { withSiblingCors } from "@/lib/sibling-origin";
 // Ни то ни другое — 401 (нет входа) или 403 (не та роль). Хозяин за этой машиной проходит как архитектор (get-session).
 // 🛑 Ключ никогда не приходит в адресе: он осел бы в истории, журналах и `Referer`.
 
-const SECRET = process.env.REVALIDATE_SECRET ?? "";
+// 869: read at call time, so a new key in the element's .env.local is live without a deploy (lib/live-env.mjs).
+const secret = () => process.env.REVALIDATE_SECRET ?? "";
 const ROLES = new Set(["architect", "admin"]);
 
 async function allowed(req: NextRequest): Promise<200 | 401 | 403> {
   const auth = req.headers.get("authorization") ?? "";
+  const SECRET = secret();
   if (SECRET && auth === `Bearer ${SECRET}`) return 200;
   const session = await getSession(req);
   if (!session) return 401;

@@ -51,8 +51,8 @@ const MESSENGERS = [
 // остальных — относительная ссылка уходила 307 в ядро на другой порт, и предзагрузка Next.js в открытом ящике давала ошибки CORS
 // (замер на узле владельца: 10 в консоли). Адрес ядра —
 // ARCHITECT_URL от установщика узла; нет его — прежний путь (у сайта и прочих он перенаправляет в ядро).
-const ARCHITECT_URL = (process.env.ARCHITECT_URL ?? "").replace(/[/]+$/, "")
-const architectHref = (lang: string, path = "") => `${ARCHITECT_URL}/${lang}${ARCHITECT_HOME}${path ? `/${path}` : ""}`
+const architectUrl = () => (process.env.ARCHITECT_URL ?? "").replace(/[/]+$/, "")
+const architectHref = (lang: string, path = "") => `${architectUrl()}/${lang}${ARCHITECT_HOME}${path ? `/${path}` : ""}`
 
 // 645-3 (владелец 2026-11-04, после первой установки глазами нового человека): «в нём сейчас огромное количество мусора который мы
 // ещё не используем: нужно скрыть все вкладки, а вместо них создать: – как это работает – подписка Cloud Code – терминал – активация
